@@ -23,6 +23,17 @@ export async function getRecentMeetings(days: number = 14): Promise<Meeting[]> {
   return data;
 }
 
+export async function updateMeeting(id: string, updates: Partial<Meeting>): Promise<Meeting> {
+  const { data, error } = await supabase
+    .from('meetings')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function addMeeting(meeting: Omit<Meeting, 'id' | 'created_at' | 'actions' | 'account'>): Promise<Meeting> {
   const { data, error } = await supabase
     .from('meetings')

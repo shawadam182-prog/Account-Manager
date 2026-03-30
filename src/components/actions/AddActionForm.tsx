@@ -23,13 +23,12 @@ export default function AddActionForm({
     setSaving(true);
     try {
       await addAction({
-        account_id: accountId,
+        account_id: accountId!,
         meeting_id: meetingId || null,
         description: description.trim(),
         owner,
         due_date: dueDate || null,
         status: 'Open',
-        completed_at: null,
       });
       onSaved();
     } finally {

@@ -3,7 +3,7 @@ import type { Account } from '../lib/types';
 
 export async function getAccounts(): Promise<Account[]> {
   const { data, error } = await supabase
-    .from('accounts')
+    .from('accounts_with_stats')
     .select('*')
     .order('company_name');
   if (error) throw error;

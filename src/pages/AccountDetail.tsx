@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Sparkles } from 'lucide-react';
 import type { Account, Meeting, Action } from '../lib/types';
 import { getAccount, updateAccount } from '../services/accountsService';
 import { getMeetingsForAccount } from '../services/meetingsService';
@@ -11,6 +11,7 @@ import MeetingTimeline from '../components/meetings/MeetingTimeline';
 import AddMeetingForm from '../components/meetings/AddMeetingForm';
 import ActionsList from '../components/actions/ActionsList';
 import AddActionForm from '../components/actions/AddActionForm';
+import TranscriptUpload from '../components/meetings/TranscriptUpload';
 
 const MEMBERSHIP_OPTIONS = [
   { value: 'Business Certification', label: 'Business Certification' },
@@ -57,6 +58,7 @@ export default function AccountDetail() {
   const [activeTab, setActiveTab] = useState<'meetings' | 'actions'>('meetings');
   const [showAddMeeting, setShowAddMeeting] = useState(false);
   const [showAddAction, setShowAddAction] = useState(false);
+  const [showTranscriptUpload, setShowTranscriptUpload] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!id) return;
@@ -203,15 +205,35 @@ export default function AccountDetail() {
 
           {activeTab === 'meetings' && (
             <div className="space-y-3">
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
                 <button
-                  onClick={() => setShowAddMeeting(true)}
+                  onClick={() => { setShowTranscriptUpload(true); setShowAddMeeting(false); }}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 border border-emerald-300 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-50"
+                >
+                  <Sparkles size={14} />
+                  Upload Transcript
+                </button>
+                <button
+                  onClick={() => { setShowAddMeeting(true); setShowTranscriptUpload(false); }}
                   className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600"
                 >
                   <Plus size={14} />
                   Add Meeting
                 </button>
               </div>
+
+              {showTranscriptUpload && (
+                <TranscriptUpload
+                  accountId={account.id}
+                  accountName={account.company_name}
+                  accountContext={meetings
+                    .slice(0, 3)
+                    .map((m) => `${m.meeting_date}: ${m.notes?.slice(0, 200) || 'No notes'}`)
+                    .join('\n\n')}
+                  onSaved={() => { setShowTranscriptUpload(false); loadData(); }}
+                  onCancel={() => setShowTranscriptUpload(false)}
+                />
+              )}
 
               {showAddMeeting && (
                 <AddMeetingForm
@@ -224,7 +246,7 @@ export default function AccountDetail() {
                 />
               )}
 
-              <MeetingTimeline meetings={meetings} onRefresh={loadData} />
+              <MeetingTimeline meetings={meetings} accountName={account.company_name} onRefresh={loadData} />
             </div>
           )}
 

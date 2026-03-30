@@ -40,6 +40,7 @@ export interface Account {
   created_at: string;
   updated_at: string;
   last_meeting_date?: string | null;
+  days_since_contact?: number | null;
   open_actions_count?: number;
   overdue_actions_count?: number;
 }

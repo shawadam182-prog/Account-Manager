@@ -62,11 +62,33 @@ function MultiSelect({ label, param, options }: { label: string; param: string; 
   );
 }
 
+function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full text-xs">
+      {label}
+      <button onClick={onRemove} className="hover:text-emerald-900">×</button>
+    </span>
+  );
+}
+
 export default function AccountFilters({ totalCount, filteredCount }: { totalCount: number; filteredCount: number }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const search = searchParams.get('search') || '';
+  const ragFilter = searchParams.get('rag')?.split(',').filter(Boolean) || [];
+  const reportFilter = searchParams.get('report')?.split(',').filter(Boolean) || [];
+  const membershipFilter = searchParams.get('membership')?.split(',').filter(Boolean) || [];
+  const renewalFilter = searchParams.get('renewal')?.split(',').filter(Boolean) || [];
+  const addonsFilter = searchParams.get('addons')?.split(',').filter(Boolean) || [];
 
   const hasFilters = Array.from(searchParams.keys()).length > 0;
+
+  const removeFromParam = (param: string, val: string) => {
+    const current = searchParams.get(param)?.split(',').filter(Boolean) || [];
+    const next = current.filter((v) => v !== val);
+    const params = new URLSearchParams(searchParams);
+    if (next.length === 0) params.delete(param); else params.set(param, next.join(','));
+    setSearchParams(params);
+  };
 
   return (
     <div className="space-y-3">
@@ -101,6 +123,30 @@ export default function AccountFilters({ totalCount, filteredCount }: { totalCou
           </button>
         )}
       </div>
+      {hasFilters && (
+        <div className="flex flex-wrap gap-1.5">
+          {search && (
+            <ActiveChip label={`Search: "${search}"`} onRemove={() => {
+              const p = new URLSearchParams(searchParams); p.delete('search'); setSearchParams(p);
+            }} />
+          )}
+          {ragFilter.map((v) => (
+            <ActiveChip key={v} label={`RAG: ${v}`} onRemove={() => removeFromParam('rag', v)} />
+          ))}
+          {reportFilter.map((v) => (
+            <ActiveChip key={v} label={`Report: ${v}`} onRemove={() => removeFromParam('report', v)} />
+          ))}
+          {membershipFilter.map((v) => (
+            <ActiveChip key={v} label={v} onRemove={() => removeFromParam('membership', v)} />
+          ))}
+          {renewalFilter.map((v) => (
+            <ActiveChip key={v} label={`Renewal: ${v}`} onRemove={() => removeFromParam('renewal', v)} />
+          ))}
+          {addonsFilter.map((v) => (
+            <ActiveChip key={v} label={v} onRemove={() => removeFromParam('addons', v)} />
+          ))}
+        </div>
+      )}
       <p className="text-xs text-gray-500">
         {filteredCount === totalCount
           ? `${totalCount} accounts`

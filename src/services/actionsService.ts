@@ -38,10 +38,17 @@ export async function updateActionStatus(id: string, status: 'Open' | 'Done' | '
   if (error) throw error;
 }
 
-export async function addAction(action: Omit<Action, 'id' | 'created_at' | 'account'>): Promise<Action> {
+export async function addAction(action: {
+  account_id: string;
+  meeting_id?: string | null;
+  description: string;
+  owner: string;
+  due_date?: string | null;
+  status?: string;
+}): Promise<Action> {
   const { data, error } = await supabase
     .from('actions')
-    .insert(action)
+    .insert({ status: 'Open', ...action })
     .select()
     .single();
   if (error) throw error;

@@ -4,9 +4,11 @@ import EmptyState from '../ui/EmptyState';
 
 export default function MeetingTimeline({
   meetings,
+  accountName,
   onRefresh,
 }: {
   meetings: Meeting[];
+  accountName: string;
   onRefresh: () => void;
 }) {
   if (meetings.length === 0) {
@@ -19,8 +21,9 @@ export default function MeetingTimeline({
         <MeetingCard
           key={meeting.id}
           meeting={meeting}
+          accountName={accountName}
           defaultExpanded={idx < 5}
-          onActionToggle={onRefresh}
+          onRefresh={onRefresh}
         />
       ))}
     </div>
