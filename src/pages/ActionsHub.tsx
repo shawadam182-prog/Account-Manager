@@ -50,53 +50,77 @@ export default function ActionsHub() {
   const openCount = actions.filter((a) => a.status === 'Open').length;
 
   if (loading) {
-    return <div className="text-gray-400 py-12 text-center">Loading...</div>;
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: '#9CA3AF' }}>
+        Loading...
+      </div>
+    );
   }
 
+  const inputStyle: React.CSSProperties = {
+    padding: '6px 12px',
+    fontSize: '13px',
+    border: '1px solid #E5E0D8',
+    borderRadius: '6px',
+    outline: 'none',
+    fontFamily: 'var(--font-sans)',
+    color: '#111827',
+    background: '#FDFCF9',
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">
-          Actions <span className="text-lg font-normal text-gray-400">({openCount} open)</span>
+    <div>
+      <div style={{ marginBottom: '24px' }}>
+        <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#111827', margin: 0 }}>
+          Actions
+          <span style={{ fontSize: '14px', fontWeight: 400, color: '#9CA3AF', marginLeft: '8px' }}>
+            {openCount} open
+          </span>
         </h1>
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap">
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap',
+        marginBottom: '24px',
+        background: 'white', border: '1px solid #E8E3DB', borderRadius: '10px',
+        padding: '14px 16px', boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+      }}>
         <input
           type="text"
           placeholder="Search by account or description..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg w-64 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+          style={{ ...inputStyle, width: '260px' }}
         />
         <select
           value={ownerFilter}
           onChange={(e) => setOwnerFilter(e.target.value)}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+          style={inputStyle}
         >
           <option value="All">All owners</option>
           <option value="Millie">Millie</option>
           <option value="Client">Client</option>
           <option value="Other">Other</option>
         </select>
-        <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
           <input
             type="checkbox"
             checked={showCompleted}
             onChange={(e) => setShowCompleted(e.target.checked)}
-            className="rounded text-emerald-500 focus:ring-emerald-500"
           />
           Show completed
         </label>
       </div>
 
-      <ActionSection title="My Actions" count={millie.length} actions={millie} onToggle={toggle} />
-      <ActionSection title="Client Actions" count={client.length} actions={client} onToggle={toggle} />
-      <ActionSection title="Internal / Other" count={other.length} actions={other} onToggle={toggle} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <ActionSection title="My Actions" count={millie.length} actions={millie} onToggle={toggle} />
+        <ActionSection title="Client Actions" count={client.length} actions={client} onToggle={toggle} />
+        <ActionSection title="Internal / Other" count={other.length} actions={other} onToggle={toggle} />
 
-      {showCompleted && completed.length > 0 && (
-        <ActionSection title="Completed" count={completed.length} actions={completed} onToggle={toggle} />
-      )}
+        {showCompleted && completed.length > 0 && (
+          <ActionSection title="Completed" count={completed.length} actions={completed} onToggle={toggle} />
+        )}
+      </div>
     </div>
   );
 }
@@ -116,41 +140,60 @@ function ActionSection({
 
   return (
     <section>
-      <h3 className="text-sm font-semibold text-gray-900 mb-2">
-        {title}{' '}
-        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+        <h3 style={{ fontSize: '13px', fontWeight: 600, color: '#374151', margin: 0 }}>{title}</h3>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          minWidth: '20px', height: '20px', borderRadius: '10px',
+          background: '#F5F0E8', color: '#6B7280',
+          fontSize: '11px', fontWeight: 600,
+        }}>
           {count}
         </span>
-      </h3>
-      <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
-        {actions.map((action) => (
-          <div key={action.id} className="flex items-start gap-3 p-3 hover:bg-gray-50 transition-colors">
-            <input
-              type="checkbox"
-              checked={action.status === 'Done'}
-              onChange={() => onToggle(action)}
-              className="mt-0.5 rounded text-emerald-500 focus:ring-emerald-500"
-            />
-            <span className={`flex-1 text-sm ${action.status === 'Done' ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+      </div>
+      <div style={{
+        background: 'white', borderRadius: '10px',
+        border: '1px solid #E8E3DB',
+        overflow: 'hidden',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+      }}>
+        {actions.map((action, i) => (
+          <div key={action.id} style={{
+            display: 'flex', alignItems: 'flex-start', gap: '12px',
+            padding: '12px 16px',
+            borderBottom: i < actions.length - 1 ? '1px solid #F5F0E8' : 'none',
+            transition: 'background 0.1s',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#FDFCF9')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+          >
+            <input type="checkbox" checked={action.status === 'Done'} onChange={() => onToggle(action)}
+              style={{ marginTop: '2px', cursor: 'pointer', accentColor: '#16a34a' }} />
+            <span style={{
+              flex: 1, fontSize: '13px',
+              color: action.status === 'Done' ? '#D1C9BC' : '#111827',
+              textDecoration: action.status === 'Done' ? 'line-through' : 'none',
+            }}>
               {action.description}
             </span>
             {action.account ? (
-              <Link
-                to={`/accounts/${action.account.id}`}
-                className="text-xs text-emerald-600 hover:text-emerald-700 whitespace-nowrap"
-              >
+              <Link to={`/accounts/${action.account.id}`} style={{
+                fontSize: '12px', color: '#16a34a', textDecoration: 'none',
+                fontWeight: 500, whiteSpace: 'nowrap',
+              }}>
                 {action.account.company_name}
               </Link>
-            ) : (
-              <span className="text-xs text-gray-400">No account</span>
-            )}
-            <span className={`text-xs px-1.5 py-0.5 rounded whitespace-nowrap ${
-              action.owner === 'Millie' ? 'bg-emerald-100 text-emerald-700' : action.owner === 'Client' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-            }`}>
+            ) : null}
+            <span style={{
+              fontSize: '11px', fontWeight: 600, padding: '2px 7px', borderRadius: '3px',
+              background: action.owner === 'Millie' ? '#F0FDF4' : action.owner === 'Client' ? '#EFF6FF' : '#F5F5F4',
+              color: action.owner === 'Millie' ? '#15803D' : action.owner === 'Client' ? '#1D4ED8' : '#6B7280',
+              whiteSpace: 'nowrap',
+            }}>
               {action.owner}
             </span>
             {action.due_date && (
-              <span className="text-xs text-gray-400 whitespace-nowrap">
+              <span style={{ fontSize: '11px', color: '#9CA3AF', whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)' }}>
                 {new Date(action.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
               </span>
             )}

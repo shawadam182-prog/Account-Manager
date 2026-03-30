@@ -55,7 +55,12 @@ export default function AccountList() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold text-gray-900">Accounts</h1>
+      <div style={{ marginBottom: '20px' }}>
+        <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#111827', margin: 0 }}>Accounts</h1>
+        <p style={{ fontSize: '13px', color: '#9CA3AF', marginTop: '2px' }}>
+          Your portfolio — click any column to sort, click RAG dots to update inline
+        </p>
+      </div>
       <AccountFilters totalCount={accounts.length} filteredCount={filtered.length} />
       <AccountTable accounts={filtered} />
     </div>

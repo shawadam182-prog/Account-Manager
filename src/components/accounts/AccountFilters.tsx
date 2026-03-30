@@ -36,22 +36,41 @@ function MultiSelect({ label, param, options }: { label: string; param: string; 
   };
 
   return (
-    <div className="relative" ref={ref}>
+    <div style={{ position: 'relative' }} ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className={`px-3 py-1.5 text-xs border rounded-lg transition-colors ${selected.length > 0 ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'}`}
+        style={{
+          padding: '5px 10px', fontSize: '12px', borderRadius: '6px',
+          border: selected.length > 0 ? '1px solid #86EFAC' : '1px solid #E5E0D8',
+          background: selected.length > 0 ? '#F0FDF4' : '#FDFCF9',
+          color: selected.length > 0 ? '#15803D' : '#6B7280',
+          cursor: 'pointer', fontFamily: 'var(--font-sans)',
+        }}
       >
         {label} {selected.length > 0 && `(${selected.length})`}
       </button>
       {open && (
-        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[180px]">
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, marginTop: '4px',
+          background: 'white', border: '1px solid #E8E3DB',
+          borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+          zIndex: 20, minWidth: '180px', padding: '4px',
+        }}>
           {options.map((opt) => (
-            <label key={opt} className="flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-gray-50 cursor-pointer">
+            <label
+              key={opt}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '6px 10px', fontSize: '13px', cursor: 'pointer',
+                borderRadius: '4px',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#F9FAFB')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
               <input
                 type="checkbox"
                 checked={selected.includes(opt)}
                 onChange={() => toggle(opt)}
-                className="rounded text-emerald-500 focus:ring-emerald-500"
               />
               {opt}
             </label>
@@ -64,9 +83,17 @@ function MultiSelect({ label, param, options }: { label: string; param: string; 
 
 function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full text-xs">
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: '4px',
+      padding: '2px 8px', borderRadius: '20px',
+      background: '#F0FDF4', border: '1px solid #86EFAC',
+      color: '#15803D', fontSize: '12px', fontWeight: 500,
+    }}>
       {label}
-      <button onClick={onRemove} className="hover:text-emerald-900">×</button>
+      <button
+        onClick={onRemove}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#15803D', padding: 0, lineHeight: 1 }}
+      >×</button>
     </span>
   );
 }
@@ -91,11 +118,17 @@ export default function AccountFilters({ totalCount, filteredCount }: { totalCou
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-3 flex-wrap">
+    <div style={{
+      background: 'white',
+      border: '1px solid #E8E3DB',
+      borderRadius: '10px',
+      padding: '14px 16px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <input
           type="text"
-          placeholder="Search company or POC..."
+          placeholder="Search company or contact..."
           value={search}
           onChange={(e) => {
             const params = new URLSearchParams(searchParams);
@@ -106,7 +139,17 @@ export default function AccountFilters({ totalCount, filteredCount }: { totalCou
             }
             setSearchParams(params);
           }}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg w-64 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+          style={{
+            padding: '6px 12px',
+            fontSize: '13px',
+            border: '1px solid #E5E0D8',
+            borderRadius: '6px',
+            width: '220px',
+            outline: 'none',
+            fontFamily: 'var(--font-sans)',
+            color: '#111827',
+            background: '#FDFCF9',
+          }}
         />
         <MultiSelect label="RAG Status" param="rag" options={RAG_OPTIONS} />
         <MultiSelect label="Report Status" param="report" options={REPORT_OPTIONS} />
@@ -116,15 +159,21 @@ export default function AccountFilters({ totalCount, filteredCount }: { totalCou
         {hasFilters && (
           <button
             onClick={() => setSearchParams({})}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '4px',
+              padding: '5px 10px', fontSize: '12px',
+              color: '#DC2626', background: '#FEF2F2',
+              border: '1px solid #FECACA', borderRadius: '6px',
+              cursor: 'pointer', fontFamily: 'var(--font-sans)',
+            }}
           >
-            <X size={12} />
-            Clear all
+            <X size={11} /> Clear all
           </button>
         )}
       </div>
+
       {hasFilters && (
-        <div className="flex flex-wrap gap-1.5">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
           {search && (
             <ActiveChip label={`Search: "${search}"`} onRemove={() => {
               const p = new URLSearchParams(searchParams); p.delete('search'); setSearchParams(p);
@@ -147,7 +196,8 @@ export default function AccountFilters({ totalCount, filteredCount }: { totalCou
           ))}
         </div>
       )}
-      <p className="text-xs text-gray-500">
+
+      <p style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '10px' }}>
         {filteredCount === totalCount
           ? `${totalCount} accounts`
           : `${filteredCount} of ${totalCount} accounts`}

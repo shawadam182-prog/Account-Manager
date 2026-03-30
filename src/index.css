@@ -1,10 +1,35 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'DM Mono', 'Fira Code', monospace;
 }
 
 body {
-  @apply bg-gray-50 text-gray-900 text-sm antialiased;
+  background-color: #F5F3EE;
+  color: #1C1917;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
   margin: 0;
 }
+
+/* Health border utilities — applied to table rows */
+.health-border-healthy  { border-left: 3px solid #16a34a; }
+.health-border-monitor  { border-left: 3px solid #d97706; }
+.health-border-risk     { border-left: 3px solid #ea580c; }
+.health-border-critical { border-left: 3px solid #dc2626; }
+.health-border-none     { border-left: 3px solid #d1c9bc; }
+
+/* Smooth checkbox transitions */
+input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: #16a34a;
+}
+
+/* Subtle scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1c9bc; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #a8a199; }
