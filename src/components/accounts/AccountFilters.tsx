@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { X } from 'lucide-react';
 
@@ -9,7 +10,19 @@ const ADDON_OPTIONS = ['Social Value', 'PPN', 'ESOS'];
 
 function MultiSelect({ label, param, options }: { label: string; param: string; options: string[] }) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
   const selected = searchParams.get(param)?.split(',').filter(Boolean) || [];
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   const toggle = (val: string) => {
     const next = selected.includes(val) ? selected.filter((s) => s !== val) : [...selected, val];
@@ -23,23 +36,28 @@ function MultiSelect({ label, param, options }: { label: string; param: string; 
   };
 
   return (
-    <div className="relative group">
-      <button className={`px-3 py-1.5 text-xs border rounded-lg transition-colors ${selected.length > 0 ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'}`}>
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className={`px-3 py-1.5 text-xs border rounded-lg transition-colors ${selected.length > 0 ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'}`}
+      >
         {label} {selected.length > 0 && `(${selected.length})`}
       </button>
-      <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[180px] hidden group-hover:block">
-        {options.map((opt) => (
-          <label key={opt} className="flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-gray-50 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={selected.includes(opt)}
-              onChange={() => toggle(opt)}
-              className="rounded text-emerald-500 focus:ring-emerald-500"
-            />
-            {opt}
-          </label>
-        ))}
-      </div>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[180px]">
+          {options.map((opt) => (
+            <label key={opt} className="flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-gray-50 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selected.includes(opt)}
+                onChange={() => toggle(opt)}
+                className="rounded text-emerald-500 focus:ring-emerald-500"
+              />
+              {opt}
+            </label>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
