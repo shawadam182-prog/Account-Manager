@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Building2, CheckSquare, Leaf } from 'lucide-react';
+import { LayoutDashboard, Building2, CheckSquare } from 'lucide-react';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -11,20 +11,15 @@ export default function Sidebar() {
   return (
     <aside
       className="w-60 shrink-0 flex flex-col min-h-screen"
-      style={{ background: '#0D1F16' }}
+      style={{ background: '#0B1A2E' }}
     >
       {/* Logo */}
-      <div className="px-6 py-5 flex items-center gap-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-        <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-          style={{ background: '#16a34a' }}
-        >
-          <Leaf size={14} color="white" />
-        </div>
-        <div>
-          <p className="text-sm font-semibold" style={{ color: '#F0EDE8' }}>Planet Mark</p>
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Account Manager</p>
-        </div>
+      <div className="px-6 py-5 flex items-center gap-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <img
+          src="/planetmark-logo.png"
+          alt="PlanetMark"
+          style={{ height: '28px', width: 'auto' }}
+        />
       </div>
 
       {/* Nav */}
@@ -42,8 +37,8 @@ export default function Sidebar() {
               }`
             }
             style={({ isActive }) => ({
-              background: isActive ? 'rgba(22,163,74,0.2)' : 'transparent',
-              color: isActive ? '#4ade80' : 'rgba(255,255,255,0.5)',
+              background: isActive ? 'rgba(59,130,246,0.15)' : 'transparent',
+              color: isActive ? '#60A5FA' : 'rgba(255,255,255,0.5)',
             })}
             onMouseEnter={(e) => {
               const el = e.currentTarget;
@@ -73,7 +68,7 @@ export default function Sidebar() {
       >
         <div
           className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
-          style={{ background: '#16a34a', color: 'white' }}
+          style={{ background: '#3B82F6', color: 'white' }}
         >
           MH
         </div>
