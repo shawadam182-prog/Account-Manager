@@ -36,41 +36,25 @@ function MultiSelect({ label, param, options }: { label: string; param: string; 
   };
 
   return (
-    <div style={{ position: 'relative' }} ref={ref}>
+    <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        style={{
-          padding: '5px 10px', fontSize: '12px', borderRadius: '6px',
-          border: selected.length > 0 ? '1px solid #86EFAC' : '1px solid #E5E0D8',
-          background: selected.length > 0 ? '#F0FDF4' : '#FDFCF9',
-          color: selected.length > 0 ? '#15803D' : '#6B7280',
-          cursor: 'pointer', fontFamily: 'var(--font-sans)',
-        }}
+        className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors cursor-pointer ${selected.length > 0 ? 'border-green-300 bg-green-50 text-green-700' : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'}`}
       >
         {label} {selected.length > 0 && `(${selected.length})`}
       </button>
       {open && (
-        <div style={{
-          position: 'absolute', top: '100%', left: 0, marginTop: '4px',
-          background: 'white', border: '1px solid #E8E3DB',
-          borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-          zIndex: 20, minWidth: '180px', padding: '4px',
-        }}>
+        <div className="absolute top-full left-0 mt-2 bg-white/95 backdrop-blur-xl border border-zinc-200/80 rounded-xl shadow-lg z-20 min-w-[180px] p-1">
           {options.map((opt) => (
             <label
               key={opt}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '6px 10px', fontSize: '13px', cursor: 'pointer',
-                borderRadius: '4px',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#F9FAFB')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              className="flex items-center gap-2 px-3 py-2 text-[13px] font-medium text-zinc-700 cursor-pointer rounded-lg hover:bg-zinc-50 transition-colors"
             >
               <input
                 type="checkbox"
                 checked={selected.includes(opt)}
                 onChange={() => toggle(opt)}
+                className="w-3.5 h-3.5 text-brand-primary rounded border-zinc-300 focus:ring-brand-primary cursor-pointer"
               />
               {opt}
             </label>
@@ -83,16 +67,11 @@ function MultiSelect({ label, param, options }: { label: string; param: string; 
 
 function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: '4px',
-      padding: '2px 8px', borderRadius: '20px',
-      background: '#F0FDF4', border: '1px solid #86EFAC',
-      color: '#15803D', fontSize: '12px', fontWeight: 500,
-    }}>
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-[11px] font-bold tracking-wide uppercase">
       {label}
       <button
         onClick={onRemove}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#15803D', padding: 0, lineHeight: 1 }}
+        className="bg-transparent border-none cursor-pointer text-green-700 p-0 hover:text-green-900 transition-colors leading-none"
       >×</button>
     </span>
   );
@@ -118,14 +97,8 @@ export default function AccountFilters({ totalCount, filteredCount }: { totalCou
   };
 
   return (
-    <div style={{
-      background: 'white',
-      border: '1px solid #E8E3DB',
-      borderRadius: '10px',
-      padding: '14px 16px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+    <div className="bg-white/70 backdrop-blur-md border border-zinc-200/80 rounded-2xl p-5 shadow-sm mb-6">
+      <div className="flex items-center gap-3 flex-wrap">
         <input
           type="text"
           placeholder="Search company or contact..."
@@ -139,17 +112,7 @@ export default function AccountFilters({ totalCount, filteredCount }: { totalCou
             }
             setSearchParams(params);
           }}
-          style={{
-            padding: '6px 12px',
-            fontSize: '13px',
-            border: '1px solid #E5E0D8',
-            borderRadius: '6px',
-            width: '220px',
-            outline: 'none',
-            fontFamily: 'var(--font-sans)',
-            color: '#111827',
-            background: '#FDFCF9',
-          }}
+          className="px-4 py-2 outline-none border border-zinc-200/80 bg-white rounded-xl text-sm font-medium text-zinc-900 w-64 focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all duration-300"
         />
         <MultiSelect label="RAG Status" param="rag" options={RAG_OPTIONS} />
         <MultiSelect label="Report Status" param="report" options={REPORT_OPTIONS} />
@@ -159,21 +122,15 @@ export default function AccountFilters({ totalCount, filteredCount }: { totalCou
         {hasFilters && (
           <button
             onClick={() => setSearchParams({})}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '4px',
-              padding: '5px 10px', fontSize: '12px',
-              color: '#DC2626', background: '#FEF2F2',
-              border: '1px solid #FECACA', borderRadius: '6px',
-              cursor: 'pointer', fontFamily: 'var(--font-sans)',
-            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors cursor-pointer"
           >
-            <X size={11} /> Clear all
+            <X size={14} strokeWidth={3} /> Clear all
           </button>
         )}
       </div>
 
       {hasFilters && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
+        <div className="flex flex-wrap gap-2 mt-4">
           {search && (
             <ActiveChip label={`Search: "${search}"`} onRemove={() => {
               const p = new URLSearchParams(searchParams); p.delete('search'); setSearchParams(p);
@@ -197,7 +154,7 @@ export default function AccountFilters({ totalCount, filteredCount }: { totalCou
         </div>
       )}
 
-      <p style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '10px' }}>
+      <p className="text-xs font-semibold text-zinc-500 mt-4 uppercase tracking-widest">
         {filteredCount === totalCount
           ? `${totalCount} accounts`
           : `${filteredCount} of ${totalCount} accounts`}

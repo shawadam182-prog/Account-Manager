@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { Download } from 'lucide-react';
 import { getAccounts } from '../services/accountsService';
@@ -11,7 +12,6 @@ export default function AccountList() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
-  const [exportHover, setExportHover] = useState(false);
 
   useEffect(() => {
     document.title = 'Accounts — Planet Mark AM';
@@ -58,31 +58,27 @@ export default function AccountList() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6 pb-12"
+    >
+      <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#111827', margin: 0 }}>Accounts</h1>
-          <p style={{ fontSize: '13px', color: '#9CA3AF', marginTop: '2px' }}>
+          <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 m-0">Accounts</h1>
+          <p className="text-sm font-semibold text-zinc-500 mt-2 uppercase tracking-widest">
             Your portfolio — click any column to sort, click RAG dots to update inline
           </p>
         </div>
         <button
           onClick={() => exportAccountsCsv(filtered)}
-          onMouseEnter={() => setExportHover(true)}
-          onMouseLeave={() => setExportHover(false)}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '6px',
-            padding: '6px 12px', fontSize: '12px', fontWeight: 500,
-            color: '#6B7280', background: exportHover ? '#F5F0E8' : 'transparent',
-            border: '1px solid #E5E0D8', borderRadius: '6px', cursor: 'pointer',
-            transition: 'background 0.15s', marginTop: '4px',
-          }}
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-zinc-700 bg-white/50 backdrop-blur-sm border border-zinc-200/80 rounded-xl hover:bg-white hover:shadow-md transition-all duration-300 mt-1 cursor-pointer"
         >
-          <Download size={13} /> Export CSV
+          <Download size={16} className="text-zinc-500" /> Export CSV
         </button>
       </div>
       <AccountFilters totalCount={accounts.length} filteredCount={filtered.length} />
       <AccountTable accounts={filtered} />
-    </div>
+    </motion.div>
   );
 }

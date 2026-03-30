@@ -16,9 +16,10 @@ export default function Layout() {
   }, []);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen relative overflow-hidden bg-[var(--color-brand-background)] text-[var(--color-brand-text)] selection:bg-brand-primary/20">
+      <div className="ambient-glow" />
       <Sidebar accountCount={accounts.length} actionCount={actions.filter(a => a.status === 'Open').length} />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto content-layer scroll-smooth">
         <div className="p-8 max-w-screen-xl mx-auto">
           <Outlet />
         </div>

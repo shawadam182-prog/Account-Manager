@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, Clock, ListChecks, TrendingUp, CalendarDays, Users, CheckCircle } from 'lucide-react';
 import type { Account, Meeting, Action } from '../lib/types';
@@ -34,44 +35,40 @@ function StatCard({
   color: string; icon: React.ElementType; to?: string;
 }) {
   const content = (
-    <div style={{
-      background: 'white', borderRadius: '10px',
-      border: '1px solid #E8E3DB',
-      padding: '20px 24px',
-      boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-      display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-      transition: to ? 'box-shadow 0.15s ease, transform 0.1s ease' : undefined,
-      cursor: to ? 'pointer' : 'default',
-    }}
-    onMouseEnter={(e) => {
-      if (!to) return;
-      (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
-      (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
-    }}
-    onMouseLeave={(e) => {
-      (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)';
-      (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-    }}
+    <motion.div 
+      variants={{
+        hidden: { opacity: 0, y: 20 },
+        show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 400, damping: 30 } }
+      }}
+      whileHover={to ? { y: -4, scale: 1.015 } : undefined}
+      className={`relative overflow-hidden bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-zinc-200/80 shadow-sm transition-shadow duration-300 ${to ? 'cursor-pointer hover:shadow-xl hover:border-zinc-300/80 group' : ''}`}
     >
-      <div>
-        <p style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: '8px' }}>
-          {label}
-        </p>
-        <p style={{ fontSize: '32px', fontWeight: 700, color: '#111827', lineHeight: 1, fontFamily: 'var(--font-mono)' }}>
-          {value}
-        </p>
-        {sub && <p style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '4px' }}>{sub}</p>}
+      <div className="flex items-start justify-between relative z-10">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-2">
+            {label}
+          </p>
+          <p className="text-4xl font-extrabold text-zinc-900 tracking-tighter font-mono leading-none">
+            {value}
+          </p>
+          {sub && <p className="text-xs font-semibold text-zinc-400 mt-2">{sub}</p>}
+        </div>
+        <div 
+          className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110"
+          style={{ background: color + '15' }}
+        >
+          <Icon size={22} color={color} />
+        </div>
       </div>
-      <div style={{
-        width: '40px', height: '40px', borderRadius: '10px',
-        background: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        <Icon size={20} color={color} />
-      </div>
-    </div>
+      {/* Decorative gradient overlay */}
+      <div 
+        className="absolute -bottom-16 -right-16 w-40 h-40 rounded-full blur-3xl opacity-20 pointer-events-none transition-opacity duration-300 group-hover:opacity-40"
+        style={{ background: color }}
+      />
+    </motion.div>
   );
 
-  if (to) return <Link to={to} style={{ textDecoration: 'none', display: 'block' }}>{content}</Link>;
+  if (to) return <Link to={to} className="block outline-none focus-visible:ring-2 focus-visible:ring-brand-primary rounded-2xl">{content}</Link>;
   return content;
 }
 
@@ -168,30 +165,39 @@ export default function Dashboard() {
     });
 
   return (
-    <div>
-      <div style={{ marginBottom: '28px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#111827', margin: 0 }}>
+    <motion.div 
+      initial="hidden"
+      animate="show"
+      variants={{
+        hidden: { opacity: 0 },
+        show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+      }}
+      className="space-y-8 pb-12"
+    >
+      <motion.div 
+        variants={{ hidden: { opacity: 0, x: -20 }, show: { opacity: 1, x: 0 } }}
+      >
+        <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 m-0">
           {getGreeting()}, Millie
         </h1>
-        <p style={{ fontSize: '14px', color: '#9CA3AF', marginTop: '3px' }}>{today}</p>
-      </div>
+        <p className="text-sm font-semibold text-zinc-500 mt-2 uppercase tracking-widest">{today}</p>
+      </motion.div>
 
-      <div className="stat-grid" style={{ marginBottom: '28px' }}>
+      <motion.div 
+        variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
+        className="stat-grid"
+      >
         <StatCard label="Total Accounts" value={totalAccounts} sub="in your portfolio" color="#6366F1" icon={Users} />
         <StatCard label="Overdue Reports" value={overdueCount} sub="need action" color="#DC2626" icon={AlertTriangle} to="/accounts?report=Overdue" />
         <StatCard label="At Risk / Amber" value={amberRedCount} sub="accounts flagged" color="#D97706" icon={Clock} to="/accounts?rag=Amber,Red" />
         <StatCard label="Open Actions" value={openActionsCount} sub="to complete" color="#16A34A" icon={ListChecks} to="/actions" />
-      </div>
+      </motion.div>
 
       {/* ===== Your Priorities Today ===== */}
-      <div style={{
-        background: 'white',
-        borderRadius: '10px',
-        border: '1px solid #E8E3DB',
-        padding: '24px',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-        marginBottom: '28px',
-      }}>
+      <motion.div 
+        variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
+        className="bg-white/80 backdrop-blur-xl rounded-2xl border border-zinc-200/80 p-8 shadow-sm hover:shadow-lg transition-shadow duration-300"
+      >
         <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#111827', margin: '0 0 16px 0' }}>
           Your Priorities Today
         </h2>
@@ -346,22 +352,20 @@ export default function Dashboard() {
 
           </div>
         )}
-      </div>
+      </motion.div>
 
-      <div className="section-grid">
+      <motion.div 
+        variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
+        className="section-grid"
+      >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#111827', margin: 0 }}>Needs Attention</h2>
-            <Link to="/accounts" style={{ fontSize: '12px', color: '#16a34a', textDecoration: 'none' }}>
+          <div className="flex items-center justify-between mb-4 px-1">
+            <h2 className="text-[15px] font-bold text-zinc-900 tracking-tight">Needs Attention</h2>
+            <Link to="/accounts" className="text-xs font-bold text-brand-primary hover:text-brand-primary-hover transition-colors">
               View all →
             </Link>
           </div>
-          <div style={{
-            background: 'white', borderRadius: '10px',
-            border: '1px solid #E8E3DB',
-            overflow: 'hidden',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-          }}>
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-zinc-200/80 overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
             {attentionAccounts.length === 0 ? (
               <p style={{ padding: '24px', color: '#9CA3AF', fontSize: '13px', textAlign: 'center' }}>
                 No accounts flagged as at risk
@@ -396,19 +400,14 @@ export default function Dashboard() {
         </div>
 
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#111827', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <CalendarDays size={16} color="#6366F1" />
+          <div className="flex items-center justify-between mb-4 px-1">
+            <h2 className="text-[15px] font-bold text-zinc-900 tracking-tight flex items-center gap-2">
+              <CalendarDays size={18} className="text-blue-500" />
               Upcoming Renewals
             </h2>
-            <span style={{ fontSize: '12px', color: '#9CA3AF' }}>Next 90 days</span>
+            <span className="text-xs font-semibold text-zinc-500">Next 90 days</span>
           </div>
-          <div style={{
-            background: 'white', borderRadius: '10px',
-            border: '1px solid #E8E3DB',
-            overflow: 'hidden',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-          }}>
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-zinc-200/80 overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
             {upcomingRenewals.length === 0 ? (
               <p style={{ padding: '24px', color: '#9CA3AF', fontSize: '13px', textAlign: 'center' }}>
                 No renewals in the next 90 days
@@ -447,18 +446,15 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div style={{ gridColumn: '1 / -1' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-            <TrendingUp size={16} color="#16a34a" />
-            <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#111827', margin: 0 }}>Recent Meetings</h2>
-            <span style={{ fontSize: '12px', color: '#9CA3AF' }}>Last 14 days</span>
+        <div className="col-span-1 md:col-span-2 mt-4">
+          <div className="flex items-center justify-between mb-4 px-1">
+            <h2 className="text-[15px] font-bold text-zinc-900 tracking-tight flex items-center gap-2">
+              <TrendingUp size={18} className="text-brand-primary" />
+              Recent Meetings
+            </h2>
+            <span className="text-xs font-semibold text-zinc-500">Last 14 days</span>
           </div>
-          <div style={{
-            background: 'white', borderRadius: '10px',
-            border: '1px solid #E8E3DB',
-            overflow: 'hidden',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-          }}>
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-zinc-200/80 overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
             {meetings.length === 0 ? (
               <p style={{ padding: '24px', color: '#9CA3AF', fontSize: '13px', textAlign: 'center' }}>
                 No meetings logged in the last 14 days
@@ -514,7 +510,7 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
