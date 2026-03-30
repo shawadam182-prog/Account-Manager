@@ -28,48 +28,36 @@ function getUpcomingRenewalMonths(): string[] {
   );
 }
 
-function StatCard({
-  label, value, sub, color, icon: Icon, to,
+function StatTab({
+  label, value, color, icon: Icon, to,
 }: {
-  label: string; value: number; sub?: string;
+  label: string; value: number;
   color: string; icon: React.ElementType; to?: string;
 }) {
-  const content = (
-    <motion.div 
-      variants={{
-        hidden: { opacity: 0, y: 20 },
-        show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 400, damping: 30 } }
-      }}
-      whileHover={to ? { y: -4, scale: 1.015 } : undefined}
-      className={`relative overflow-hidden bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-zinc-200/80 shadow-sm transition-shadow duration-300 ${to ? 'cursor-pointer hover:shadow-xl hover:border-zinc-300/80 group' : ''}`}
+  const inner = (
+    <div
+      className="flex items-center gap-3 px-5 py-3.5 rounded-xl bg-white/60 backdrop-blur-md border border-zinc-200/80 transition-all duration-200 hover:shadow-md hover:bg-white/90 group"
+      style={{ cursor: to ? 'pointer' : 'default' }}
     >
-      <div className="flex items-start justify-between relative z-10">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-2">
-            {label}
-          </p>
-          <p className="text-4xl font-extrabold text-zinc-900 tracking-tighter font-mono leading-none">
-            {value}
-          </p>
-          {sub && <p className="text-xs font-semibold text-zinc-400 mt-2">{sub}</p>}
-        </div>
-        <div 
-          className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110"
-          style={{ background: color + '15' }}
-        >
-          <Icon size={22} color={color} />
-        </div>
+      <div
+        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110"
+        style={{ background: color + '15' }}
+      >
+        <Icon size={18} color={color} />
       </div>
-      {/* Decorative gradient overlay */}
-      <div 
-        className="absolute -bottom-16 -right-16 w-40 h-40 rounded-full blur-3xl opacity-20 pointer-events-none transition-opacity duration-300 group-hover:opacity-40"
-        style={{ background: color }}
-      />
-    </motion.div>
+      <div className="flex flex-col">
+        <span className="text-xl font-extrabold text-zinc-900 tracking-tight font-mono leading-none">
+          {value}
+        </span>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mt-0.5">
+          {label}
+        </span>
+      </div>
+    </div>
   );
 
-  if (to) return <Link to={to} className="block outline-none focus-visible:ring-2 focus-visible:ring-brand-primary rounded-2xl">{content}</Link>;
-  return content;
+  if (to) return <Link to={to} className="outline-none focus-visible:ring-2 focus-visible:ring-brand-primary rounded-xl">{inner}</Link>;
+  return inner;
 }
 
 export default function Dashboard() {
@@ -101,7 +89,7 @@ export default function Dashboard() {
             })}
           </p>
         </div>
-        <div className="stat-grid" style={{ marginBottom: '28px' }}>
+        <div className="flex flex-wrap gap-3" style={{ marginBottom: '28px' }}>
           <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
@@ -183,14 +171,14 @@ export default function Dashboard() {
         <p className="text-sm font-semibold text-zinc-500 mt-2 uppercase tracking-widest">{today}</p>
       </motion.div>
 
-      <motion.div 
+      <motion.div
         variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
-        className="stat-grid"
+        className="flex flex-wrap gap-3"
       >
-        <StatCard label="Total Accounts" value={totalAccounts} sub="in your portfolio" color="#6366F1" icon={Users} />
-        <StatCard label="Overdue Reports" value={overdueCount} sub="need action" color="#DC2626" icon={AlertTriangle} to="/accounts?report=Overdue" />
-        <StatCard label="At Risk / Amber" value={amberRedCount} sub="accounts flagged" color="#D97706" icon={Clock} to="/accounts?rag=Amber,Red" />
-        <StatCard label="Open Actions" value={openActionsCount} sub="to complete" color="#16A34A" icon={ListChecks} to="/actions" />
+        <StatTab label="Total Accounts" value={totalAccounts} color="#6366F1" icon={Users} />
+        <StatTab label="Overdue Reports" value={overdueCount} color="#DC2626" icon={AlertTriangle} to="/accounts?report=Overdue" />
+        <StatTab label="At Risk / Amber" value={amberRedCount} color="#D97706" icon={Clock} to="/accounts?rag=Amber,Red" />
+        <StatTab label="Open Actions" value={openActionsCount} color="#16A34A" icon={ListChecks} to="/actions" />
       </motion.div>
 
       {/* ===== Your Priorities Today ===== */}

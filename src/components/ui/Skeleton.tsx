@@ -74,18 +74,18 @@ export function SkeletonCard() {
       style={{
         backgroundColor: '#FFFFFF',
         border: '1px solid #E8E3DB',
-        borderRadius: '10px',
-        padding: '20px',
+        borderRadius: '12px',
+        padding: '14px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
       }}
     >
-      {/* Label line */}
-      <Skeleton width="40%" height="12px" style={{ marginBottom: '12px' }} />
-
-      {/* Large value line */}
-      <Skeleton width="60%" height="28px" style={{ marginBottom: '14px' }} />
-
-      {/* Sub-text line */}
-      <Skeleton width="50%" height="12px" />
+      <Skeleton width="36px" height="36px" style={{ borderRadius: '8px', flexShrink: 0 }} />
+      <div>
+        <Skeleton width="32px" height="20px" style={{ marginBottom: '4px' }} />
+        <Skeleton width="72px" height="10px" />
+      </div>
     </div>
   );
 }
