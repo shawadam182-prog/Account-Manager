@@ -79,6 +79,12 @@ export default function AccountDetail() {
     loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    if (account) {
+      document.title = `${account.company_name} — Planet Mark AM`;
+    }
+  }, [account]);
+
   const handleUpdate = async (field: string, value: unknown) => {
     if (!account) return;
     setAccount({ ...account, [field]: value } as Account);

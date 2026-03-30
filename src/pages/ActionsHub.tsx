@@ -1,7 +1,23 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Download } from 'lucide-react';
 import type { Action } from '../lib/types';
 import { getAllActions, getAllOpenActions, updateActionStatus } from '../services/actionsService';
+import { exportActionsCsv } from '../utils/csvExport';
+
+function getDueDateInfo(dueDate: string | null): { label: string; color: string; urgent: boolean } | null {
+  if (!dueDate) return null;
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate + 'T00:00:00');
+  const diffDays = Math.round((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return { label: `${Math.abs(diffDays)}d overdue`, color: '#DC2626', urgent: true };
+  if (diffDays === 0) return { label: 'Due today', color: '#D97706', urgent: true };
+  if (diffDays <= 3) return { label: `Due in ${diffDays}d`, color: '#D97706', urgent: false };
+  if (diffDays <= 7) return { label: `Due in ${diffDays}d`, color: '#3B82F6', urgent: false };
+  return null;
+}
 
 export default function ActionsHub() {
   const [actions, setActions] = useState<Action[]>([]);
@@ -9,6 +25,11 @@ export default function ActionsHub() {
   const [searchTerm, setSearchTerm] = useState('');
   const [ownerFilter, setOwnerFilter] = useState('All');
   const [showCompleted, setShowCompleted] = useState(false);
+  const [exportHover, setExportHover] = useState(false);
+
+  useEffect(() => {
+    document.title = 'Actions — Planet Mark AM';
+  }, []);
 
   const loadActions = async () => {
     const data = showCompleted ? await getAllActions() : await getAllOpenActions();
@@ -22,8 +43,21 @@ export default function ActionsHub() {
 
   const toggle = async (action: Action) => {
     const newStatus = action.status === 'Done' ? 'Open' : 'Done';
-    await updateActionStatus(action.id, newStatus);
-    loadActions();
+    // Optimistic update
+    setActions((prev) =>
+      prev.map((a) =>
+        a.id === action.id
+          ? { ...a, status: newStatus, completed_at: newStatus === 'Done' ? new Date().toISOString() : null }
+          : a
+      )
+    );
+    try {
+      await updateActionStatus(action.id, newStatus);
+    } catch {
+      setActions((prev) =>
+        prev.map((a) => (a.id === action.id ? action : a))
+      );
+    }
   };
 
   const filtered = actions.filter((a) => {
@@ -70,13 +104,27 @@ export default function ActionsHub() {
 
   return (
     <div>
-      <div style={{ marginBottom: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
         <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#111827', margin: 0 }}>
           Actions
           <span style={{ fontSize: '14px', fontWeight: 400, color: '#9CA3AF', marginLeft: '8px' }}>
             {openCount} open
           </span>
         </h1>
+        <button
+          onClick={() => exportActionsCsv(filtered)}
+          onMouseEnter={() => setExportHover(true)}
+          onMouseLeave={() => setExportHover(false)}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            padding: '6px 12px', fontSize: '12px', fontWeight: 500,
+            color: '#6B7280', background: exportHover ? '#F5F0E8' : 'transparent',
+            border: '1px solid #E5E0D8', borderRadius: '6px', cursor: 'pointer',
+            transition: 'background 0.15s',
+          }}
+        >
+          <Download size={13} /> Export CSV
+        </button>
       </div>
 
       <div style={{
@@ -157,48 +205,62 @@ function ActionSection({
         overflow: 'hidden',
         boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
       }}>
-        {actions.map((action, i) => (
-          <div key={action.id} style={{
-            display: 'flex', alignItems: 'flex-start', gap: '12px',
-            padding: '12px 16px',
-            borderBottom: i < actions.length - 1 ? '1px solid #F5F0E8' : 'none',
-            transition: 'background 0.1s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = '#FDFCF9')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-          >
-            <input type="checkbox" checked={action.status === 'Done'} onChange={() => onToggle(action)}
-              style={{ marginTop: '2px', cursor: 'pointer', accentColor: '#16a34a' }} />
-            <span style={{
-              flex: 1, fontSize: '13px',
-              color: action.status === 'Done' ? '#D1C9BC' : '#111827',
-              textDecoration: action.status === 'Done' ? 'line-through' : 'none',
-            }}>
-              {action.description}
-            </span>
-            {action.account ? (
-              <Link to={`/accounts/${action.account.id}`} style={{
-                fontSize: '12px', color: '#16a34a', textDecoration: 'none',
-                fontWeight: 500, whiteSpace: 'nowrap',
+        {actions.map((action, i) => {
+          const dueDateInfo = action.status === 'Open' ? getDueDateInfo(action.due_date) : null;
+          return (
+            <div key={action.id} style={{
+              display: 'flex', alignItems: 'flex-start', gap: '12px',
+              padding: '12px 16px',
+              borderBottom: i < actions.length - 1 ? '1px solid #F5F0E8' : 'none',
+              transition: 'background 0.1s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#FDFCF9')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              <input type="checkbox" checked={action.status === 'Done'} onChange={() => onToggle(action)}
+                style={{ marginTop: '2px', cursor: 'pointer', accentColor: '#16a34a' }} />
+              <span style={{
+                flex: 1, fontSize: '13px',
+                color: action.status === 'Done' ? '#D1C9BC' : '#111827',
+                textDecoration: action.status === 'Done' ? 'line-through' : 'none',
               }}>
-                {action.account.company_name}
-              </Link>
-            ) : null}
-            <span style={{
-              fontSize: '11px', fontWeight: 600, padding: '2px 7px', borderRadius: '3px',
-              background: action.owner === 'Millie' ? '#F0FDF4' : action.owner === 'Client' ? '#EFF6FF' : '#F5F5F4',
-              color: action.owner === 'Millie' ? '#15803D' : action.owner === 'Client' ? '#1D4ED8' : '#6B7280',
-              whiteSpace: 'nowrap',
-            }}>
-              {action.owner}
-            </span>
-            {action.due_date && (
-              <span style={{ fontSize: '11px', color: '#9CA3AF', whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)' }}>
-                {new Date(action.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                {action.description}
               </span>
-            )}
-          </div>
-        ))}
+              {action.account ? (
+                <Link to={`/accounts/${action.account.id}`} style={{
+                  fontSize: '12px', color: '#16a34a', textDecoration: 'none',
+                  fontWeight: 500, whiteSpace: 'nowrap',
+                }}>
+                  {action.account.company_name}
+                </Link>
+              ) : null}
+              <span style={{
+                fontSize: '11px', fontWeight: 600, padding: '2px 7px', borderRadius: '3px',
+                background: action.owner === 'Millie' ? '#F0FDF4' : action.owner === 'Client' ? '#EFF6FF' : '#F5F5F4',
+                color: action.owner === 'Millie' ? '#15803D' : action.owner === 'Client' ? '#1D4ED8' : '#6B7280',
+                whiteSpace: 'nowrap',
+              }}>
+                {action.owner}
+              </span>
+              {dueDateInfo ? (
+                <span style={{
+                  fontSize: '11px', fontWeight: dueDateInfo.urgent ? 600 : 400,
+                  color: dueDateInfo.color, whiteSpace: 'nowrap',
+                  fontFamily: 'var(--font-mono)',
+                  background: dueDateInfo.urgent ? (dueDateInfo.color === '#DC2626' ? '#FFF1F2' : '#FFFBEB') : 'transparent',
+                  padding: dueDateInfo.urgent ? '1px 6px' : '0',
+                  borderRadius: '3px',
+                }}>
+                  {dueDateInfo.label}
+                </span>
+              ) : action.due_date ? (
+                <span style={{ fontSize: '11px', color: '#9CA3AF', whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)' }}>
+                  {new Date(action.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                </span>
+              ) : null}
+            </div>
+          );
+        })}
       </div>
     </section>
   );

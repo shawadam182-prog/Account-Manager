@@ -1,13 +1,18 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Building2, CheckSquare } from 'lucide-react';
+import { LayoutDashboard, Building2, CheckSquare, Search } from 'lucide-react';
 
-const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/accounts', label: 'Accounts', icon: Building2, end: false },
-  { to: '/actions', label: 'Actions', icon: CheckSquare, end: false },
-];
+interface SidebarProps {
+  accountCount?: number;
+  actionCount?: number;
+}
 
-export default function Sidebar() {
+export default function Sidebar({ accountCount, actionCount }: SidebarProps) {
+  const navItems = [
+    { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true, count: undefined as number | undefined },
+    { to: '/accounts', label: 'Accounts', icon: Building2, end: false, count: accountCount },
+    { to: '/actions', label: 'Actions', icon: CheckSquare, end: false, count: actionCount },
+  ];
+
   return (
     <aside
       className="w-60 shrink-0 flex flex-col min-h-screen"
@@ -24,7 +29,7 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 py-3 px-3">
-        {navItems.map(({ to, label, icon: Icon, end }) => (
+        {navItems.map(({ to, label, icon: Icon, end, count }) => (
           <NavLink
             key={to}
             to={to}
@@ -56,9 +61,44 @@ export default function Sidebar() {
             }}
           >
             <Icon size={16} />
-            {label}
+            <span style={{ flex: 1 }}>{label}</span>
+            {count !== undefined && count > 0 && (
+              <span style={{
+                fontSize: '11px', fontWeight: 600,
+                minWidth: '20px', height: '18px',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                borderRadius: '9px',
+                background: 'rgba(255,255,255,0.1)',
+                color: 'rgba(255,255,255,0.5)',
+              }}>
+                {count}
+              </span>
+            )}
           </NavLink>
         ))}
+
+        {/* Search hint */}
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '8px 12px', marginTop: '12px',
+            fontSize: '12px', color: 'rgba(255,255,255,0.25)',
+            borderTop: '1px solid rgba(255,255,255,0.05)',
+            paddingTop: '16px',
+          }}
+        >
+          <Search size={13} />
+          <span>Search</span>
+          <kbd style={{
+            marginLeft: 'auto', fontSize: '10px',
+            padding: '1px 5px', borderRadius: '3px',
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: 'rgba(255,255,255,0.3)',
+          }}>
+            Ctrl+K
+          </kbd>
+        </div>
       </nav>
 
       {/* User */}

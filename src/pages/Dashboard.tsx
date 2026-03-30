@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, Clock, ListChecks, TrendingUp, CalendarDays, Users } from 'lucide-react';
+import { AlertTriangle, Clock, ListChecks, TrendingUp, CalendarDays, Users, CheckCircle } from 'lucide-react';
 import type { Account, Meeting, Action } from '../lib/types';
 import { getAccounts } from '../services/accountsService';
 import { getRecentMeetings } from '../services/meetingsService';
@@ -9,6 +9,7 @@ import MembershipBadge from '../components/ui/MembershipBadge';
 import RAGBadge from '../components/ui/RAGBadge';
 import StatusBadge from '../components/ui/StatusBadge';
 import HealthBadge from '../components/ui/HealthBadge';
+import { SkeletonCard, SkeletonTable } from '../components/ui/Skeleton';
 import { computeHealthScore } from '../utils/healthScore';
 
 function getGreeting() {
@@ -81,6 +82,10 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    document.title = 'Dashboard — Planet Mark AM';
+  }, []);
+
+  useEffect(() => {
     Promise.all([getAccounts(), getRecentMeetings(14), getAllOpenActions()])
       .then(([a, m, act]) => { setAccounts(a); setMeetings(m); setActions(act); })
       .finally(() => setLoading(false));
@@ -88,8 +93,24 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', color: '#9CA3AF' }}>
-        Loading...
+      <div>
+        <div style={{ marginBottom: '28px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#111827', margin: 0 }}>
+            {getGreeting()}, Millie
+          </h1>
+          <p style={{ fontSize: '14px', color: '#9CA3AF', marginTop: '3px' }}>
+            {new Date().toLocaleDateString('en-GB', {
+              weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+            })}
+          </p>
+        </div>
+        <div className="stat-grid" style={{ marginBottom: '28px' }}>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+        <SkeletonTable rows={5} />
       </div>
     );
   }
@@ -113,6 +134,39 @@ export default function Dashboard() {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
 
+  // --- Priorities data ---
+  const now = new Date();
+  const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const overdueActions = actions.filter(a => {
+    if (a.status !== 'Open' || !a.due_date) return false;
+    const d = new Date(a.due_date + 'T00:00:00');
+    return d < todayDate;
+  });
+
+  const staleAccounts = accounts.filter(
+    a => a.days_since_contact != null && a.days_since_contact > 30,
+  );
+
+  const weekFromNow = new Date(todayDate);
+  weekFromNow.setDate(weekFromNow.getDate() + 7);
+
+  const dueThisWeek = actions.filter(a => {
+    if (a.status !== 'Open' || !a.due_date) return false;
+    const d = new Date(a.due_date + 'T00:00:00');
+    return d >= todayDate && d <= weekFromNow;
+  });
+
+  const prioritiesEmpty =
+    overdueActions.length === 0 &&
+    staleAccounts.length === 0 &&
+    dueThisWeek.length === 0;
+
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB', {
+      day: 'numeric', month: 'short',
+    });
+
   return (
     <div>
       <div style={{ marginBottom: '28px' }}>
@@ -127,6 +181,171 @@ export default function Dashboard() {
         <StatCard label="Overdue Reports" value={overdueCount} sub="need action" color="#DC2626" icon={AlertTriangle} to="/accounts?report=Overdue" />
         <StatCard label="At Risk / Amber" value={amberRedCount} sub="accounts flagged" color="#D97706" icon={Clock} to="/accounts?rag=Amber,Red" />
         <StatCard label="Open Actions" value={openActionsCount} sub="to complete" color="#16A34A" icon={ListChecks} to="/actions" />
+      </div>
+
+      {/* ===== Your Priorities Today ===== */}
+      <div style={{
+        background: 'white',
+        borderRadius: '10px',
+        border: '1px solid #E8E3DB',
+        padding: '24px',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+        marginBottom: '28px',
+      }}>
+        <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#111827', margin: '0 0 16px 0' }}>
+          Your Priorities Today
+        </h2>
+
+        {prioritiesEmpty ? (
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', padding: '32px 0', color: '#9CA3AF',
+          }}>
+            <CheckCircle size={36} style={{ marginBottom: '10px', color: '#16a34a' }} />
+            <p style={{ fontSize: '14px', fontWeight: 500, color: '#111827' }}>You're all caught up!</p>
+            <p style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '2px' }}>No overdue actions, stale accounts, or upcoming deadlines.</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+            {/* Overdue Actions */}
+            {overdueActions.length > 0 && (
+              <div>
+                <p style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#DC2626', marginBottom: '8px' }}>
+                  Overdue Actions ({overdueActions.length})
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
+                  {overdueActions.slice(0, 5).map(a => (
+                    <div
+                      key={a.id}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '8px 0',
+                        borderBottom: '1px solid #F5F0E8',
+                      }}
+                    >
+                      <div style={{
+                        width: '8px', height: '8px', borderRadius: '50%',
+                        background: '#DC2626', flexShrink: 0,
+                      }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: '13px', color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {a.description}
+                        </p>
+                        {a.account && (
+                          <Link
+                            to={`/accounts/${a.account.id}`}
+                            style={{ fontSize: '12px', color: '#16a34a', textDecoration: 'none' }}
+                            onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                          >
+                            {a.account.company_name}
+                          </Link>
+                        )}
+                      </div>
+                      {a.due_date && (
+                        <span style={{ fontSize: '11px', color: '#DC2626', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
+                          {formatDate(a.due_date)}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {overdueActions.length > 5 && (
+                  <Link to="/actions" style={{ fontSize: '12px', color: '#16a34a', textDecoration: 'none', marginTop: '6px', display: 'inline-block' }}>
+                    View all {overdueActions.length} overdue →
+                  </Link>
+                )}
+              </div>
+            )}
+
+            {/* Stale Accounts */}
+            {staleAccounts.length > 0 && (
+              <div>
+                <p style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#D97706', marginBottom: '8px' }}>
+                  Stale Accounts ({staleAccounts.length})
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
+                  {staleAccounts.slice(0, 5).map(a => (
+                    <div
+                      key={a.id}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '8px 0',
+                        borderBottom: '1px solid #F5F0E8',
+                      }}
+                    >
+                      <div style={{
+                        width: '8px', height: '8px', borderRadius: '50%',
+                        background: '#D97706', flexShrink: 0,
+                      }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <Link
+                          to={`/accounts/${a.id}`}
+                          style={{ fontSize: '13px', fontWeight: 500, color: '#111827', textDecoration: 'none' }}
+                          onMouseEnter={(e) => (e.currentTarget.style.color = '#16a34a')}
+                          onMouseLeave={(e) => (e.currentTarget.style.color = '#111827')}
+                        >
+                          {a.company_name}
+                        </Link>
+                      </div>
+                      <span style={{ fontSize: '12px', color: '#9CA3AF', flexShrink: 0 }}>
+                        {a.days_since_contact} days since last contact
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Due This Week */}
+            {dueThisWeek.length > 0 && (
+              <div>
+                <p style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#3B82F6', marginBottom: '8px' }}>
+                  Due This Week ({dueThisWeek.length})
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
+                  {dueThisWeek.slice(0, 5).map(a => (
+                    <div
+                      key={a.id}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '8px 0',
+                        borderBottom: '1px solid #F5F0E8',
+                      }}
+                    >
+                      <div style={{
+                        width: '8px', height: '8px', borderRadius: '50%',
+                        background: '#3B82F6', flexShrink: 0,
+                      }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: '13px', color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {a.description}
+                        </p>
+                        {a.account && (
+                          <Link
+                            to={`/accounts/${a.account.id}`}
+                            style={{ fontSize: '12px', color: '#16a34a', textDecoration: 'none' }}
+                            onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                          >
+                            {a.account.company_name}
+                          </Link>
+                        )}
+                      </div>
+                      {a.due_date && (
+                        <span style={{ fontSize: '11px', color: '#3B82F6', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
+                          {formatDate(a.due_date)}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </div>
+        )}
       </div>
 
       <div className="section-grid">

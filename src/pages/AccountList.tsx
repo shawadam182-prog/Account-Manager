@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Download } from 'lucide-react';
 import { getAccounts } from '../services/accountsService';
 import type { Account } from '../lib/types';
 import AccountFilters from '../components/accounts/AccountFilters';
 import AccountTable from '../components/accounts/AccountTable';
+import { exportAccountsCsv } from '../utils/csvExport';
 
 export default function AccountList() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
+  const [exportHover, setExportHover] = useState(false);
 
   useEffect(() => {
+    document.title = 'Accounts — Planet Mark AM';
     getAccounts().then(setAccounts).finally(() => setLoading(false));
   }, []);
 
@@ -55,11 +59,27 @@ export default function AccountList() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ marginBottom: '20px' }}>
-        <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#111827', margin: 0 }}>Accounts</h1>
-        <p style={{ fontSize: '13px', color: '#9CA3AF', marginTop: '2px' }}>
-          Your portfolio — click any column to sort, click RAG dots to update inline
-        </p>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
+        <div>
+          <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#111827', margin: 0 }}>Accounts</h1>
+          <p style={{ fontSize: '13px', color: '#9CA3AF', marginTop: '2px' }}>
+            Your portfolio — click any column to sort, click RAG dots to update inline
+          </p>
+        </div>
+        <button
+          onClick={() => exportAccountsCsv(filtered)}
+          onMouseEnter={() => setExportHover(true)}
+          onMouseLeave={() => setExportHover(false)}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            padding: '6px 12px', fontSize: '12px', fontWeight: 500,
+            color: '#6B7280', background: exportHover ? '#F5F0E8' : 'transparent',
+            border: '1px solid #E5E0D8', borderRadius: '6px', cursor: 'pointer',
+            transition: 'background 0.15s', marginTop: '4px',
+          }}
+        >
+          <Download size={13} /> Export CSV
+        </button>
       </div>
       <AccountFilters totalCount={accounts.length} filteredCount={filtered.length} />
       <AccountTable accounts={filtered} />
