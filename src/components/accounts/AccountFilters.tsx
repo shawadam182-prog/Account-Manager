@@ -1,0 +1,93 @@
+import { useSearchParams } from 'react-router-dom';
+import { X } from 'lucide-react';
+
+const RAG_OPTIONS = ['Green', 'Amber', 'Red', 'Not set'];
+const REPORT_OPTIONS = ['In progress', 'Overdue', 'Report Delivered', 'Data Submitted', 'Not set'];
+const MEMBERSHIP_OPTIONS = ['Business Certification', 'Advanced', 'Net Zero Committed', 'Multiple Tiers'];
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const ADDON_OPTIONS = ['Social Value', 'PPN', 'ESOS'];
+
+function MultiSelect({ label, param, options }: { label: string; param: string; options: string[] }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selected = searchParams.get(param)?.split(',').filter(Boolean) || [];
+
+  const toggle = (val: string) => {
+    const next = selected.includes(val) ? selected.filter((s) => s !== val) : [...selected, val];
+    const params = new URLSearchParams(searchParams);
+    if (next.length === 0) {
+      params.delete(param);
+    } else {
+      params.set(param, next.join(','));
+    }
+    setSearchParams(params);
+  };
+
+  return (
+    <div className="relative group">
+      <button className={`px-3 py-1.5 text-xs border rounded-lg transition-colors ${selected.length > 0 ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'}`}>
+        {label} {selected.length > 0 && `(${selected.length})`}
+      </button>
+      <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[180px] hidden group-hover:block">
+        {options.map((opt) => (
+          <label key={opt} className="flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-gray-50 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={selected.includes(opt)}
+              onChange={() => toggle(opt)}
+              className="rounded text-emerald-500 focus:ring-emerald-500"
+            />
+            {opt}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function AccountFilters({ totalCount, filteredCount }: { totalCount: number; filteredCount: number }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get('search') || '';
+
+  const hasFilters = Array.from(searchParams.keys()).length > 0;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3 flex-wrap">
+        <input
+          type="text"
+          placeholder="Search company or POC..."
+          value={search}
+          onChange={(e) => {
+            const params = new URLSearchParams(searchParams);
+            if (e.target.value) {
+              params.set('search', e.target.value);
+            } else {
+              params.delete('search');
+            }
+            setSearchParams(params);
+          }}
+          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg w-64 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+        />
+        <MultiSelect label="RAG Status" param="rag" options={RAG_OPTIONS} />
+        <MultiSelect label="Report Status" param="report" options={REPORT_OPTIONS} />
+        <MultiSelect label="Membership" param="membership" options={MEMBERSHIP_OPTIONS} />
+        <MultiSelect label="Renewal Month" param="renewal" options={MONTHS} />
+        <MultiSelect label="Add-Ons" param="addons" options={ADDON_OPTIONS} />
+        {hasFilters && (
+          <button
+            onClick={() => setSearchParams({})}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <X size={12} />
+            Clear all
+          </button>
+        )}
+      </div>
+      <p className="text-xs text-gray-500">
+        {filteredCount === totalCount
+          ? `${totalCount} accounts`
+          : `${filteredCount} of ${totalCount} accounts`}
+      </p>
+    </div>
+  );
+}
