@@ -5,14 +5,16 @@ import { updateMeeting } from '../../services/meetingsService';
 import { updateActionStatus, addAction } from '../../services/actionsService';
 import { callAI } from '../../services/aiService';
 
-const typeColors: Record<string, string> = {
-  'Check-in':   'bg-blue-100 text-blue-700',
-  'Renewal':    'bg-amber-100 text-amber-700',
-  'Strategy':   'bg-purple-100 text-purple-700',
-  'Data Review':'bg-teal-100 text-teal-700',
-  'Internal':   'bg-gray-100 text-gray-600',
-  'Ad hoc':     'bg-orange-100 text-orange-700',
+const typeColors: Record<string, { bg: string; text: string }> = {
+  'Check-in':    { bg: '#DBEAFE', text: '#1D4ED8' },
+  'Renewal':     { bg: '#FEF3C7', text: '#92400E' },
+  'Strategy':    { bg: '#EDE9FE', text: '#7C3AED' },
+  'Data Review': { bg: '#CCFBF1', text: '#0F766E' },
+  'Internal':    { bg: '#F5F0E8', text: '#6B7280' },
+  'Ad hoc':      { bg: '#FFEDD5', text: '#C2410C' },
 };
+
+const defaultTypeColor = { bg: '#F5F0E8', text: '#6B7280' };
 
 interface SuggestedAction {
   description: string;
@@ -130,44 +132,87 @@ export default function MeetingCard({
 
   const visibleSuggestions = suggested.filter((s) => !s.dismissed);
 
+  const ownerBadgeStyle = (owner: string): React.CSSProperties => {
+    if (owner === 'Millie') return { backgroundColor: '#DCFCE7', color: '#15803D' };
+    if (owner === 'Client') return { backgroundColor: '#DBEAFE', color: '#1D4ED8' };
+    return { backgroundColor: '#F5F0E8', color: '#6B7280' };
+  };
+
+  const tc = typeColors[meeting.meeting_type] || defaultTypeColor;
+
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4">
-      <div className="flex items-start gap-3">
-        <button onClick={() => setExpanded(!expanded)} className="mt-0.5 text-gray-400 hover:text-gray-600 shrink-0">
+    <div style={{ backgroundColor: 'white', border: '1px solid #E8E3DB', borderRadius: '10px', padding: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          style={{
+            marginTop: '2px',
+            color: '#9CA3AF',
+            flexShrink: 0,
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+          }}
+        >
           {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         </button>
-        <div className="flex-1 min-w-0">
+        <div style={{ flex: 1, minWidth: 0 }}>
 
           {/* Header */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-gray-900">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '14px', fontWeight: 500, color: '#111827' }}>
               {new Date(meeting.meeting_date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
             </span>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[meeting.meeting_type] || 'bg-gray-100 text-gray-600'}`}>
+            <span
+              style={{
+                paddingLeft: '8px',
+                paddingRight: '8px',
+                paddingTop: '2px',
+                paddingBottom: '2px',
+                borderRadius: '9999px',
+                fontSize: '12px',
+                fontWeight: 500,
+                backgroundColor: tc.bg,
+                color: tc.text,
+              }}
+            >
               {meeting.meeting_type}
             </span>
             {meeting.attendees && (
-              <span className="text-xs text-gray-500">with {meeting.attendees}</span>
+              <span style={{ fontSize: '12px', color: '#9CA3AF' }}>with {meeting.attendees}</span>
             )}
           </div>
 
           {/* Collapsed preview */}
           {!expanded && meeting.notes && (
-            <p className="text-sm text-gray-500 mt-1 truncate">{meeting.notes.slice(0, 100)}...</p>
+            <p style={{ fontSize: '14px', color: '#9CA3AF', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {meeting.notes.slice(0, 100)}...
+            </p>
           )}
 
           {/* Expanded content */}
           {expanded && (
-            <div className="mt-3 space-y-3">
+            <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
               {/* Notes section */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Notes</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 500, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Notes</span>
                   {!editingNotes && (
                     <button
                       onClick={() => setEditingNotes(true)}
-                      className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '12px',
+                        color: '#9CA3AF',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 0,
+                      }}
                     >
                       <Pencil size={11} /> Edit
                     </button>
@@ -175,26 +220,69 @@ export default function MeetingCard({
                 </div>
 
                 {editingNotes ? (
-                  <div className="space-y-2">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <textarea
                       ref={textareaRef}
                       value={notesValue}
                       onChange={(e) => setNotesValue(e.target.value)}
-                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none resize-none min-h-[80px]"
+                      style={{
+                        width: '100%',
+                        border: '1px solid #E5E0D8',
+                        borderRadius: '6px',
+                        paddingLeft: '12px',
+                        paddingRight: '12px',
+                        paddingTop: '8px',
+                        paddingBottom: '8px',
+                        fontSize: '14px',
+                        outline: 'none',
+                        resize: 'none',
+                        minHeight: '80px',
+                        boxSizing: 'border-box',
+                      }}
                       autoFocus
                     />
-                    <div className="flex items-center gap-2">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <button
                         onClick={saveNotes}
                         disabled={savingNotes}
-                        className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500 text-white rounded text-xs font-medium hover:bg-emerald-600 disabled:opacity-50"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          paddingLeft: '12px',
+                          paddingRight: '12px',
+                          paddingTop: '4px',
+                          paddingBottom: '4px',
+                          backgroundColor: '#16a34a',
+                          color: 'white',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: 500,
+                          border: 'none',
+                          cursor: 'pointer',
+                          opacity: savingNotes ? 0.5 : 1,
+                        }}
                       >
                         <Check size={12} />
                         {savingNotes ? 'Saving...' : 'Save'}
                       </button>
                       <button
                         onClick={cancelNotes}
-                        className="inline-flex items-center gap-1 px-3 py-1 border border-gray-300 text-gray-600 rounded text-xs hover:bg-gray-50"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          paddingLeft: '12px',
+                          paddingRight: '12px',
+                          paddingTop: '4px',
+                          paddingBottom: '4px',
+                          border: '1px solid #E5E0D8',
+                          color: '#6B7280',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          background: 'none',
+                          cursor: 'pointer',
+                        }}
                       >
                         <X size={12} /> Cancel
                       </button>
@@ -202,7 +290,22 @@ export default function MeetingCard({
                         <button
                           onClick={() => extractActions(notesValue)}
                           disabled={extracting}
-                          className="inline-flex items-center gap-1 px-3 py-1 border border-emerald-300 text-emerald-700 rounded text-xs hover:bg-emerald-50 ml-auto"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            paddingLeft: '12px',
+                            paddingRight: '12px',
+                            paddingTop: '4px',
+                            paddingBottom: '4px',
+                            border: '1px solid #86EFAC',
+                            color: '#15803D',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            background: 'none',
+                            cursor: 'pointer',
+                            marginLeft: 'auto',
+                          }}
                         >
                           {extracting ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                           Extract actions
@@ -211,15 +314,15 @@ export default function MeetingCard({
                     </div>
                   </div>
                 ) : (
-                  <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                    {meeting.notes || <span className="text-gray-400 italic">No notes recorded.</span>}
+                  <div style={{ fontSize: '14px', color: '#374151', whiteSpace: 'pre-wrap', lineHeight: 1.625 }}>
+                    {meeting.notes || <span style={{ color: '#9CA3AF', fontStyle: 'italic' }}>No notes recorded.</span>}
                   </div>
                 )}
               </div>
 
               {/* AI extracting indicator */}
               {extracting && (
-                <div className="flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 rounded px-3 py-2">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#16a34a', backgroundColor: '#F0FDF4', borderRadius: '6px', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px' }}>
                   <Loader2 size={12} className="animate-spin" />
                   Extracting suggested actions...
                 </div>
@@ -227,49 +330,80 @@ export default function MeetingCard({
 
               {/* AI suggested actions */}
               {visibleSuggestions.length > 0 && (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 space-y-2">
-                  <p className="text-xs font-medium text-emerald-700 flex items-center gap-1">
+                <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #86EFAC', borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <p style={{ fontSize: '12px', fontWeight: 500, color: '#15803D', display: 'flex', alignItems: 'center', gap: '4px', margin: 0 }}>
                     <Sparkles size={12} />
                     {visibleSuggestions.length} suggested action{visibleSuggestions.length > 1 ? 's' : ''} from notes
                   </p>
                   {suggested.map((s, i) => !s.dismissed && (
-                    <div key={i} className={`flex items-center gap-2 ${s.accepted ? 'opacity-50' : ''}`}>
-                      <span className="flex-1 text-xs text-gray-700">{s.description}</span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded ${s.owner === 'Millie' ? 'bg-emerald-100 text-emerald-700' : s.owner === 'Client' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: s.accepted ? 0.5 : 1 }}>
+                      <span style={{ flex: 1, fontSize: '12px', color: '#374151' }}>{s.description}</span>
+                      <span
+                        style={{
+                          fontSize: '12px',
+                          paddingLeft: '6px',
+                          paddingRight: '6px',
+                          paddingTop: '2px',
+                          paddingBottom: '2px',
+                          borderRadius: '6px',
+                          ...ownerBadgeStyle(s.owner),
+                        }}
+                      >
                         {s.owner}
                       </span>
                       {!s.accepted && (
                         <>
                           <button
                             onClick={() => acceptSuggestion(i)}
-                            className="px-2 py-0.5 bg-emerald-500 text-white rounded text-xs hover:bg-emerald-600"
+                            style={{
+                              paddingLeft: '8px',
+                              paddingRight: '8px',
+                              paddingTop: '2px',
+                              paddingBottom: '2px',
+                              backgroundColor: '#16a34a',
+                              color: 'white',
+                              borderRadius: '6px',
+                              fontSize: '12px',
+                              border: 'none',
+                              cursor: 'pointer',
+                            }}
                           >
                             Add
                           </button>
                           <button
                             onClick={() => dismissSuggestion(i)}
-                            className="text-gray-400 hover:text-gray-600"
+                            style={{ color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                           >
                             <X size={12} />
                           </button>
                         </>
                       )}
-                      {s.accepted && <Check size={12} className="text-emerald-500" />}
+                      {s.accepted && <Check size={12} style={{ color: '#16a34a' }} />}
                     </div>
                   ))}
                 </div>
               )}
 
               {/* Actions */}
-              <div className="border-t border-gray-100 pt-3">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <div style={{ borderTop: '1px solid #F0EBE3', paddingTop: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <p style={{ fontSize: '12px', fontWeight: 500, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
                     Actions {actions.length > 0 && `(${actions.filter(a => a.status === 'Open').length} open)`}
                   </p>
                   {!addingAction && (
                     <button
                       onClick={() => setAddingAction(true)}
-                      className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '12px',
+                        color: '#9CA3AF',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 0,
+                      }}
                     >
                       <Plus size={11} /> Add
                     </button>
@@ -278,54 +412,97 @@ export default function MeetingCard({
 
                 {/* Inline add action */}
                 {addingAction && (
-                  <div className="flex items-center gap-2 mb-2">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                     <input
                       type="text"
                       value={newActionDesc}
                       onChange={(e) => setNewActionDesc(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') submitNewAction(); if (e.key === 'Escape') setAddingAction(false); }}
                       placeholder="Action description..."
-                      className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-emerald-500 outline-none"
+                      style={{
+                        flex: 1,
+                        border: '1px solid #E5E0D8',
+                        borderRadius: '6px',
+                        paddingLeft: '8px',
+                        paddingRight: '8px',
+                        paddingTop: '4px',
+                        paddingBottom: '4px',
+                        fontSize: '12px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
                       autoFocus
                     />
                     <select
                       value={newActionOwner}
                       onChange={(e) => setNewActionOwner(e.target.value)}
-                      className="border border-gray-300 rounded px-1.5 py-1 text-xs outline-none"
+                      style={{
+                        border: '1px solid #E5E0D8',
+                        borderRadius: '6px',
+                        paddingLeft: '6px',
+                        paddingRight: '6px',
+                        paddingTop: '4px',
+                        paddingBottom: '4px',
+                        fontSize: '12px',
+                        outline: 'none',
+                      }}
                     >
                       <option>Millie</option>
                       <option>Client</option>
                       <option>Internal</option>
                     </select>
-                    <button onClick={submitNewAction} className="p-1 text-emerald-600 hover:text-emerald-700">
+                    <button
+                      onClick={submitNewAction}
+                      style={{ padding: '4px', color: '#16a34a', background: 'none', border: 'none', cursor: 'pointer' }}
+                    >
                       <Check size={14} />
                     </button>
-                    <button onClick={() => setAddingAction(false)} className="p-1 text-gray-400 hover:text-gray-600">
+                    <button
+                      onClick={() => setAddingAction(false)}
+                      style={{ padding: '4px', color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer' }}
+                    >
                       <X size={14} />
                     </button>
                   </div>
                 )}
 
                 {/* Actions list */}
-                <div className="space-y-1.5">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {actions.map((action) => (
-                    <label key={action.id} className="flex items-start gap-2 cursor-pointer group">
+                    <label key={action.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer' }}>
                       <input
                         type="checkbox"
                         checked={action.status === 'Done'}
                         onChange={() => toggleAction(action)}
-                        className="mt-0.5 rounded text-emerald-500 focus:ring-emerald-500"
+                        style={{ marginTop: '2px', accentColor: '#16a34a' }}
                       />
-                      <span className={`text-sm flex-1 ${action.status === 'Done' ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+                      <span
+                        style={{
+                          fontSize: '14px',
+                          flex: 1,
+                          textDecoration: action.status === 'Done' ? 'line-through' : 'none',
+                          color: action.status === 'Done' ? '#9CA3AF' : '#374151',
+                        }}
+                      >
                         {action.description}
                       </span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded ${action.owner === 'Millie' ? 'bg-emerald-100 text-emerald-700' : action.owner === 'Client' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                      <span
+                        style={{
+                          fontSize: '12px',
+                          paddingLeft: '6px',
+                          paddingRight: '6px',
+                          paddingTop: '2px',
+                          paddingBottom: '2px',
+                          borderRadius: '6px',
+                          ...ownerBadgeStyle(action.owner),
+                        }}
+                      >
                         {action.owner}
                       </span>
                     </label>
                   ))}
                   {actions.length === 0 && !addingAction && (
-                    <p className="text-xs text-gray-400 italic">No actions recorded</p>
+                    <p style={{ fontSize: '12px', color: '#9CA3AF', fontStyle: 'italic', margin: 0 }}>No actions recorded</p>
                   )}
                 </div>
               </div>

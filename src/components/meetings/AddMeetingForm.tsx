@@ -4,6 +4,18 @@ import { addMeeting } from '../../services/meetingsService';
 
 const MEETING_TYPES: MeetingType[] = ['Check-in', 'Renewal', 'Strategy', 'Data Review', 'Internal', 'Ad hoc'];
 
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  border: '1px solid #E5E0D8',
+  borderRadius: '6px',
+  padding: '6px 8px',
+  fontSize: '13px',
+  outline: 'none',
+  fontFamily: 'var(--font-sans)',
+  color: '#111827',
+  background: '#FDFCF9',
+};
+
 export default function AddMeetingForm({
   accountId,
   onSaved,
@@ -18,6 +30,8 @@ export default function AddMeetingForm({
   const [attendees, setAttendees] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [primaryHover, setPrimaryHover] = useState(false);
+  const [cancelHover, setCancelHover] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,24 +52,39 @@ export default function AddMeetingForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+    <form
+      onSubmit={handleSubmit}
+      style={{
+        background: '#F0FDF4',
+        border: '1px solid #86EFAC',
+        borderRadius: '10px',
+        padding: '16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+      }}
+    >
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Date *</label>
+          <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6B7280', marginBottom: '4px' }}>
+            Date *
+          </label>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
             required
-            className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+            style={inputStyle}
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Meeting Type</label>
+          <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6B7280', marginBottom: '4px' }}>
+            Meeting Type
+          </label>
           <select
             value={type}
             onChange={(e) => setType(e.target.value as MeetingType)}
-            className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+            style={inputStyle}
           >
             {MEETING_TYPES.map((t) => (
               <option key={t} value={t}>{t}</option>
@@ -64,36 +93,62 @@ export default function AddMeetingForm({
         </div>
       </div>
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">Attendees</label>
+        <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6B7280', marginBottom: '4px' }}>
+          Attendees
+        </label>
         <input
           type="text"
           value={attendees}
           onChange={(e) => setAttendees(e.target.value)}
           placeholder="e.g. Sarah, Tom"
-          className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+          style={inputStyle}
         />
       </div>
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
+        <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6B7280', marginBottom: '4px' }}>
+          Notes
+        </label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={4}
-          className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+          style={inputStyle}
         />
       </div>
-      <div className="flex gap-2">
+      <div style={{ display: 'flex', gap: '8px' }}>
         <button
           type="submit"
           disabled={saving}
-          className="px-4 py-1.5 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 disabled:opacity-50"
+          onMouseEnter={() => setPrimaryHover(true)}
+          onMouseLeave={() => setPrimaryHover(false)}
+          style={{
+            padding: '6px 16px',
+            background: primaryHover ? '#15803D' : '#16a34a',
+            color: 'white',
+            borderRadius: '10px',
+            fontSize: '13px',
+            fontWeight: 500,
+            border: 'none',
+            cursor: saving ? 'not-allowed' : 'pointer',
+            opacity: saving ? 0.5 : 1,
+          }}
         >
           {saving ? 'Saving...' : 'Save Meeting'}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-1.5 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-50"
+          onMouseEnter={() => setCancelHover(true)}
+          onMouseLeave={() => setCancelHover(false)}
+          style={{
+            padding: '6px 16px',
+            background: cancelHover ? '#FDFCF9' : 'transparent',
+            border: '1px solid #E5E0D8',
+            color: '#6B7280',
+            borderRadius: '10px',
+            fontSize: '13px',
+            cursor: 'pointer',
+          }}
         >
           Cancel
         </button>

@@ -43,6 +43,17 @@ export default function TranscriptUpload({
   const [showFullTranscript, setShowFullTranscript] = useState(false);
   const [showKeyPoints, setShowKeyPoints] = useState(true);
 
+  const [uploadHover, setUploadHover] = useState(false);
+  const [cancelHoverInput, setCancelHoverInput] = useState(false);
+  const [cancelBtnHoverInput, setCancelBtnHoverInput] = useState(false);
+  const [processHover, setProcessHover] = useState(false);
+  const [backHover, setBackHover] = useState(false);
+  const [keyPointsBtnHover, setKeyPointsBtnHover] = useState(false);
+  const [saveBtnHover, setSaveBtnHover] = useState(false);
+  const [discardBtnHover, setDiscardBtnHover] = useState(false);
+  const [transcriptToggleHover, setTranscriptToggleHover] = useState(false);
+  const [actionHoverIndex, setActionHoverIndex] = useState<number | null>(null);
+
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
@@ -132,44 +143,87 @@ export default function TranscriptUpload({
 
   const MEETING_TYPES: MeetingType[] = ['Check-in', 'Renewal', 'Strategy', 'Data Review', 'Internal', 'Ad hoc'];
 
+  const getOwnerBadgeStyle = (owner: string): React.CSSProperties => {
+    if (owner === 'Millie') return { backgroundColor: '#DCFCE7', color: '#15803D' };
+    if (owner === 'Client') return { backgroundColor: '#DBEAFE', color: '#1D4ED8' };
+    return { backgroundColor: '#F5F0E8', color: '#6B7280' };
+  };
+
   // --- Step: INPUT ---
   if (step === 'input') {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-medium text-gray-900 flex items-center gap-2">
-            <Sparkles size={16} className="text-emerald-500" />
+      <div style={{
+        backgroundColor: 'white',
+        border: '1px solid #E8E3DB',
+        borderRadius: '10px',
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3 style={{ fontWeight: 500, color: '#111827', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+            <Sparkles size={16} style={{ color: '#16a34a' }} />
             Process Transcript with AI
           </h3>
-          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 text-sm">Cancel</button>
+          <button
+            onClick={onCancel}
+            onMouseEnter={() => setCancelHoverInput(true)}
+            onMouseLeave={() => setCancelHoverInput(false)}
+            style={{
+              color: cancelHoverInput ? '#6B7280' : '#9CA3AF',
+              fontSize: '0.875rem',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            Cancel
+          </button>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Meeting Date</label>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: '#6B7280', marginBottom: '4px' }}>Meeting Date</label>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
+            style={{
+              border: '1px solid #E5E0D8',
+              borderRadius: '6px',
+              padding: '6px 8px',
+              fontSize: '0.875rem',
+              outline: 'none',
+            }}
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: '#6B7280', marginBottom: '4px' }}>
             Upload Transcript (.txt, .docx, .vtt, .srt)
           </label>
           <div
             onClick={() => fileRef.current?.click()}
-            className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center cursor-pointer hover:border-emerald-300 hover:bg-emerald-50 transition-colors"
+            onMouseEnter={() => setUploadHover(true)}
+            onMouseLeave={() => setUploadHover(false)}
+            style={{
+              border: uploadHover ? '2px dashed #86EFAC' : '2px dashed #E8E3DB',
+              borderRadius: '10px',
+              padding: '16px',
+              textAlign: 'center',
+              cursor: 'pointer',
+              backgroundColor: uploadHover ? '#F0FDF4' : 'transparent',
+              transition: 'border-color 0.15s, background-color 0.15s',
+            }}
           >
             {fileName ? (
-              <div className="flex items-center justify-center gap-2 text-sm text-emerald-700">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.875rem', color: '#15803D' }}>
                 <FileText size={16} />
                 {fileName}
               </div>
             ) : (
-              <div className="text-gray-400 text-sm">
-                <Upload size={20} className="mx-auto mb-1" />
+              <div style={{ color: '#9CA3AF', fontSize: '0.875rem' }}>
+                <Upload size={20} style={{ margin: '0 auto 4px auto', display: 'block' }} />
                 Click to upload, or paste below
               </div>
             )}
@@ -178,13 +232,13 @@ export default function TranscriptUpload({
             ref={fileRef}
             type="file"
             accept=".txt,.docx,.vtt,.srt"
-            className="hidden"
+            style={{ display: 'none' }}
             onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: '#6B7280', marginBottom: '4px' }}>
             Or paste transcript text {transcript && `(${transcript.length.toLocaleString()} chars)`}
           </label>
           <textarea
@@ -192,27 +246,74 @@ export default function TranscriptUpload({
             onChange={(e) => setTranscript(e.target.value)}
             rows={6}
             placeholder="Paste your meeting transcript here..."
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500 outline-none resize-none font-mono text-xs"
+            style={{
+              width: '100%',
+              border: '1px solid #E5E0D8',
+              borderRadius: '6px',
+              padding: '8px 12px',
+              fontSize: '0.75rem',
+              fontFamily: 'monospace',
+              outline: 'none',
+              resize: 'none',
+              boxSizing: 'border-box',
+            }}
           />
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 rounded px-3 py-2">
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            color: '#DC2626',
+            fontSize: '0.875rem',
+            backgroundColor: '#FFF1F2',
+            borderRadius: '6px',
+            padding: '8px 12px',
+          }}>
             <AlertCircle size={14} />
             {error}
           </div>
         )}
 
-        <div className="flex gap-2">
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button
             onClick={processTranscript}
             disabled={!transcript.trim()}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            onMouseEnter={() => setProcessHover(true)}
+            onMouseLeave={() => setProcessHover(false)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              backgroundColor: !transcript.trim() ? '#16a34a' : (processHover ? '#15803D' : '#16a34a'),
+              color: 'white',
+              borderRadius: '10px',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              border: 'none',
+              cursor: !transcript.trim() ? 'not-allowed' : 'pointer',
+              opacity: !transcript.trim() ? 0.5 : 1,
+            }}
           >
             <Sparkles size={14} />
             Process with AI
           </button>
-          <button onClick={onCancel} className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-50">
+          <button
+            onClick={onCancel}
+            onMouseEnter={() => setCancelBtnHoverInput(true)}
+            onMouseLeave={() => setCancelBtnHoverInput(false)}
+            style={{
+              padding: '8px 16px',
+              border: '1px solid #E5E0D8',
+              color: '#6B7280',
+              borderRadius: '10px',
+              fontSize: '0.875rem',
+              backgroundColor: cancelBtnHoverInput ? '#FDFCF9' : 'transparent',
+              cursor: 'pointer',
+            }}
+          >
             Cancel
           </button>
         </div>
@@ -223,10 +324,20 @@ export default function TranscriptUpload({
   // --- Step: PROCESSING ---
   if (step === 'processing') {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-8 text-center space-y-3">
-        <Loader2 size={32} className="animate-spin text-emerald-500 mx-auto" />
-        <p className="font-medium text-gray-900">Processing transcript...</p>
-        <p className="text-sm text-gray-500">Extracting summary, key points, and actions</p>
+      <div style={{
+        backgroundColor: 'white',
+        border: '1px solid #E8E3DB',
+        borderRadius: '10px',
+        padding: '32px',
+        textAlign: 'center',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        alignItems: 'center',
+      }}>
+        <Loader2 size={32} className="animate-spin" style={{ color: '#16a34a' }} />
+        <p style={{ fontWeight: 500, color: '#111827', margin: 0 }}>Processing transcript...</p>
+        <p style={{ fontSize: '0.875rem', color: '#9CA3AF', margin: 0 }}>Extracting summary, key points, and actions</p>
       </div>
     );
   }
@@ -234,58 +345,133 @@ export default function TranscriptUpload({
   // --- Step: REVIEW ---
   if (step === 'review' && result) {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-5 space-y-5">
-        <div className="flex items-center justify-between">
-          <h3 className="font-medium text-gray-900 flex items-center gap-2">
-            <Check size={16} className="text-emerald-500" />
+      <div style={{
+        backgroundColor: 'white',
+        border: '1px solid #E8E3DB',
+        borderRadius: '10px',
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3 style={{ fontWeight: 500, color: '#111827', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+            <Check size={16} style={{ color: '#16a34a' }} />
             Review AI Summary
           </h3>
-          <button onClick={() => setStep('input')} className="text-xs text-gray-400 hover:text-gray-600">
+          <button
+            onClick={() => setStep('input')}
+            onMouseEnter={() => setBackHover(true)}
+            onMouseLeave={() => setBackHover(false)}
+            style={{
+              fontSize: '0.75rem',
+              color: backHover ? '#6B7280' : '#9CA3AF',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
             ← Back
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-              className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-emerald-500" />
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: '#6B7280', marginBottom: '4px' }}>Date</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              style={{
+                width: '100%',
+                border: '1px solid #E5E0D8',
+                borderRadius: '6px',
+                padding: '6px 8px',
+                fontSize: '0.75rem',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Meeting Type</label>
-            <select value={editedType} onChange={(e) => setEditedType(e.target.value as MeetingType)}
-              className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-emerald-500">
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: '#6B7280', marginBottom: '4px' }}>Meeting Type</label>
+            <select
+              value={editedType}
+              onChange={(e) => setEditedType(e.target.value as MeetingType)}
+              style={{
+                width: '100%',
+                border: '1px solid #E5E0D8',
+                borderRadius: '6px',
+                padding: '6px 8px',
+                fontSize: '0.75rem',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            >
               {MEETING_TYPES.map((t) => <option key={t}>{t}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Attendees</label>
-            <input type="text" value={editedAttendees} onChange={(e) => setEditedAttendees(e.target.value)}
-              className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-emerald-500" />
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: '#6B7280', marginBottom: '4px' }}>Attendees</label>
+            <input
+              type="text"
+              value={editedAttendees}
+              onChange={(e) => setEditedAttendees(e.target.value)}
+              style={{
+                width: '100%',
+                border: '1px solid #E5E0D8',
+                borderRadius: '6px',
+                padding: '6px 8px',
+                fontSize: '0.75rem',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
           </div>
         </div>
 
-        <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3">
-          <p className="text-xs font-medium text-emerald-700 mb-1 flex items-center gap-1">
+        <div style={{
+          backgroundColor: '#F0FDF4',
+          border: '1px solid #BBF7D0',
+          borderRadius: '10px',
+          padding: '12px',
+        }}>
+          <p style={{ fontSize: '0.75rem', fontWeight: 500, color: '#15803D', marginBottom: '4px', marginTop: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Sparkles size={11} /> AI Summary
           </p>
-          <p className="text-sm text-gray-700">{result.summary}</p>
+          <p style={{ fontSize: '0.875rem', color: '#374151', margin: 0 }}>{result.summary}</p>
         </div>
 
         {result.keyPoints?.length > 0 && (
           <div>
             <button
               onClick={() => setShowKeyPoints(!showKeyPoints)}
-              className="flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wide mb-1 hover:text-gray-700"
+              onMouseEnter={() => setKeyPointsBtnHover(true)}
+              onMouseLeave={() => setKeyPointsBtnHover(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                color: keyPointsBtnHover ? '#374151' : '#9CA3AF',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                marginBottom: '4px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+              }}
             >
               Key Points ({result.keyPoints.length})
               {showKeyPoints ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
             </button>
             {showKeyPoints && (
-              <ul className="space-y-1">
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {result.keyPoints.map((p, i) => (
-                  <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
-                    <span className="text-emerald-400 mt-0.5">•</span> {p}
+                  <li key={i} style={{ fontSize: '0.875rem', color: '#374151', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    <span style={{ color: '#9CA3AF', marginTop: '2px' }}>•</span> {p}
                   </li>
                 ))}
               </ul>
@@ -294,23 +480,23 @@ export default function TranscriptUpload({
         )}
 
         {(result.risks?.length > 0 || result.opportunities?.length > 0) && (
-          <div className="grid grid-cols-2 gap-3">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             {result.risks?.length > 0 && (
-              <div className="bg-red-50 border border-red-100 rounded-lg p-3">
-                <p className="text-xs font-medium text-red-700 mb-1">Risks flagged</p>
-                <ul className="space-y-1">
+              <div style={{ backgroundColor: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: '10px', padding: '12px' }}>
+                <p style={{ fontSize: '0.75rem', fontWeight: 500, color: '#B91C1C', marginBottom: '4px', marginTop: 0 }}>Risks flagged</p>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   {result.risks.map((r, i) => (
-                    <li key={i} className="text-xs text-red-700">{r}</li>
+                    <li key={i} style={{ fontSize: '0.75rem', color: '#B91C1C' }}>{r}</li>
                   ))}
                 </ul>
               </div>
             )}
             {result.opportunities?.length > 0 && (
-              <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
-                <p className="text-xs font-medium text-blue-700 mb-1">Opportunities</p>
-                <ul className="space-y-1">
+              <div style={{ backgroundColor: '#EFF6FF', border: '1px solid #DBEAFE', borderRadius: '10px', padding: '12px' }}>
+                <p style={{ fontSize: '0.75rem', fontWeight: 500, color: '#1D4ED8', marginBottom: '4px', marginTop: 0 }}>Opportunities</p>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   {result.opportunities.map((o, i) => (
-                    <li key={i} className="text-xs text-blue-700">{o}</li>
+                    <li key={i} style={{ fontSize: '0.75rem', color: '#1D4ED8' }}>{o}</li>
                   ))}
                 </ul>
               </div>
@@ -320,12 +506,26 @@ export default function TranscriptUpload({
 
         {result.actions?.length > 0 && (
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+            <p style={{ fontSize: '0.75rem', fontWeight: 500, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', marginTop: 0 }}>
               Actions ({result.actions.filter((_, i) => acceptedActions[i]).length} of {result.actions.length} selected)
             </p>
-            <div className="space-y-1.5">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {result.actions.map((a, i) => (
-                <label key={i} className="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-gray-50">
+                <label
+                  key={i}
+                  onMouseEnter={() => setActionHoverIndex(i)}
+                  onMouseLeave={() => setActionHoverIndex(null)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    backgroundColor: actionHoverIndex === i ? '#FDFCF9' : 'transparent',
+                    transition: 'background-color 0.15s',
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={acceptedActions[i] ?? true}
@@ -334,10 +534,15 @@ export default function TranscriptUpload({
                       next[i] = e.target.checked;
                       setAcceptedActions(next);
                     }}
-                    className="rounded text-emerald-500 focus:ring-emerald-500"
+                    style={{ borderRadius: '4px', accentColor: '#16a34a' }}
                   />
-                  <span className="flex-1 text-sm text-gray-700">{a.description}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${a.owner === 'Millie' ? 'bg-emerald-100 text-emerald-700' : a.owner === 'Client' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                  <span style={{ flex: 1, fontSize: '0.875rem', color: '#374151' }}>{a.description}</span>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    padding: '2px 6px',
+                    borderRadius: '6px',
+                    ...getOwnerBadgeStyle(a.owner),
+                  }}>
                     {a.owner}
                   </span>
                 </label>
@@ -347,48 +552,116 @@ export default function TranscriptUpload({
         )}
 
         <div>
-          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
             Meeting Notes (edit before saving)
           </label>
           <textarea
             value={editedNotes}
             onChange={(e) => setEditedNotes(e.target.value)}
             rows={6}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-500 outline-none resize-none"
+            style={{
+              width: '100%',
+              border: '1px solid #E5E0D8',
+              borderRadius: '6px',
+              padding: '8px 12px',
+              fontSize: '0.875rem',
+              outline: 'none',
+              resize: 'none',
+              boxSizing: 'border-box',
+            }}
           />
         </div>
 
         <div>
           <button
             onClick={() => setShowFullTranscript(!showFullTranscript)}
-            className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
+            onMouseEnter={() => setTranscriptToggleHover(true)}
+            onMouseLeave={() => setTranscriptToggleHover(false)}
+            style={{
+              fontSize: '0.75rem',
+              color: transcriptToggleHover ? '#6B7280' : '#9CA3AF',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+            }}
           >
             {showFullTranscript ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
             {showFullTranscript ? 'Hide' : 'Show'} original transcript
           </button>
           {showFullTranscript && (
-            <pre className="mt-2 text-xs text-gray-500 bg-gray-50 rounded p-3 max-h-48 overflow-y-auto whitespace-pre-wrap font-mono">
+            <pre style={{
+              marginTop: '8px',
+              fontSize: '0.75rem',
+              color: '#9CA3AF',
+              backgroundColor: '#FDFCF9',
+              borderRadius: '6px',
+              padding: '12px',
+              maxHeight: '192px',
+              overflowY: 'auto',
+              whiteSpace: 'pre-wrap',
+              fontFamily: 'monospace',
+            }}>
               {transcript}
             </pre>
           )}
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 rounded px-3 py-2">
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            color: '#DC2626',
+            fontSize: '0.875rem',
+            backgroundColor: '#FFF1F2',
+            borderRadius: '6px',
+            padding: '8px 12px',
+          }}>
             <AlertCircle size={14} />
             {error}
           </div>
         )}
 
-        <div className="flex gap-2 pt-2 border-t border-gray-100">
+        <div style={{ display: 'flex', gap: '8px', paddingTop: '8px', borderTop: '1px solid #F0EBE3' }}>
           <button
             onClick={saveMeeting}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600"
+            onMouseEnter={() => setSaveBtnHover(true)}
+            onMouseLeave={() => setSaveBtnHover(false)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              backgroundColor: saveBtnHover ? '#15803D' : '#16a34a',
+              color: 'white',
+              borderRadius: '10px',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              border: 'none',
+              cursor: 'pointer',
+            }}
           >
             <Check size={14} />
             Save Meeting & Actions
           </button>
-          <button onClick={onCancel} className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-50">
+          <button
+            onClick={onCancel}
+            onMouseEnter={() => setDiscardBtnHover(true)}
+            onMouseLeave={() => setDiscardBtnHover(false)}
+            style={{
+              padding: '8px 16px',
+              border: '1px solid #E5E0D8',
+              color: '#6B7280',
+              borderRadius: '10px',
+              fontSize: '0.875rem',
+              backgroundColor: discardBtnHover ? '#FDFCF9' : 'transparent',
+              cursor: 'pointer',
+            }}
+          >
             Discard
           </button>
         </div>
@@ -398,9 +671,15 @@ export default function TranscriptUpload({
 
   // --- Step: SAVING ---
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-      <Loader2 size={24} className="animate-spin text-emerald-500 mx-auto mb-2" />
-      <p className="text-sm text-gray-600">Saving meeting and actions...</p>
+    <div style={{
+      backgroundColor: 'white',
+      border: '1px solid #E8E3DB',
+      borderRadius: '10px',
+      padding: '32px',
+      textAlign: 'center',
+    }}>
+      <Loader2 size={24} className="animate-spin" style={{ color: '#16a34a', margin: '0 auto 8px auto', display: 'block' }} />
+      <p style={{ fontSize: '0.875rem', color: '#6B7280', margin: 0 }}>Saving meeting and actions...</p>
     </div>
   );
 }

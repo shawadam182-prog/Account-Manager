@@ -37,9 +37,9 @@ export function computeHealthScore(account: Account): HealthScore {
   return 'critical';
 }
 
-export const healthConfig: Record<HealthScore, { label: string; dot: string; text: string; bg: string }> = {
-  healthy:  { label: 'Healthy',  dot: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50' },
-  monitor:  { label: 'Monitor',  dot: 'bg-yellow-400',  text: 'text-yellow-700',  bg: 'bg-yellow-50'  },
-  risk:     { label: 'At Risk',  dot: 'bg-orange-500',  text: 'text-orange-700',  bg: 'bg-orange-50'  },
-  critical: { label: 'Critical', dot: 'bg-red-500',     text: 'text-red-700',     bg: 'bg-red-50'     },
+export const healthConfig: Record<HealthScore, { label: string; dot: string; text: string; bg: string; border: string }> = {
+  healthy:  { label: 'Healthy',  dot: '#16a34a', text: '#15803D', bg: '#F0FDF4', border: '#16a34a' },
+  monitor:  { label: 'Monitor',  dot: '#d97706', text: '#92400E', bg: '#FFFBEB', border: '#d97706' },
+  risk:     { label: 'At Risk',  dot: '#ea580c', text: '#9A3412', bg: '#FFF7ED', border: '#ea580c' },
+  critical: { label: 'Critical', dot: '#dc2626', text: '#9F1239', bg: '#FFF1F2', border: '#dc2626' },
 };

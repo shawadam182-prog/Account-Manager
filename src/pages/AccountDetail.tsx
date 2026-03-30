@@ -59,6 +59,8 @@ export default function AccountDetail() {
   const [showAddMeeting, setShowAddMeeting] = useState(false);
   const [showAddAction, setShowAddAction] = useState(false);
   const [showTranscriptUpload, setShowTranscriptUpload] = useState(false);
+  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
+  const [hoveredBtn, setHoveredBtn] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!id) return;
@@ -84,25 +86,73 @@ export default function AccountDetail() {
   };
 
   if (loading || !account) {
-    return <div className="text-gray-400 py-12 text-center">Loading...</div>;
+    return (
+      <div style={{ color: '#9CA3AF', paddingTop: '48px', paddingBottom: '48px', textAlign: 'center' }}>
+        Loading...
+      </div>
+    );
   }
 
+  const getTabStyle = (tab: 'meetings' | 'actions'): React.CSSProperties => {
+    const isActive = activeTab === tab;
+    const isHovered = hoveredTab === tab;
+    return {
+      padding: '8px 16px',
+      fontSize: '14px',
+      fontWeight: 500,
+      borderBottom: `2px solid ${isActive ? '#16a34a' : 'transparent'}`,
+      marginBottom: '-1px',
+      transition: 'color 0.15s, border-color 0.15s',
+      color: isActive ? '#16a34a' : (isHovered ? '#374151' : '#9CA3AF'),
+      background: 'none',
+      border: 'none',
+      borderBottomStyle: 'solid',
+      borderBottomWidth: '2px',
+      borderBottomColor: isActive ? '#16a34a' : 'transparent',
+      cursor: 'pointer',
+    };
+  };
+
   return (
-    <div className="space-y-4">
-      <Link to="/accounts" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <Link
+        to="/accounts"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          fontSize: '14px',
+          color: '#9CA3AF',
+          textDecoration: 'none',
+        }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#374151'; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#9CA3AF'; }}
+      >
         <ArrowLeft size={14} />
         Back to accounts
       </Link>
 
-      <div className="flex gap-8">
+      <div className="detail-layout">
         {/* Left sidebar */}
-        <div className="w-72 shrink-0 space-y-4">
-          <div className="bg-white rounded-lg border border-gray-200 p-5 space-y-3">
+        <div className="detail-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '10px',
+            border: '1px solid #E8E3DB',
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+          }}>
             <div>
               <InlineEdit
                 value={account.company_name}
                 onSave={(v) => handleUpdate('company_name', v)}
-                renderValue={(v) => <h2 className="text-lg font-semibold text-gray-900">{String(v)}</h2>}
+                renderValue={(v) => (
+                  <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', margin: 0 }}>
+                    {String(v)}
+                  </h2>
+                )}
               />
             </div>
 
@@ -179,43 +229,75 @@ export default function AccountDetail() {
         </div>
 
         {/* Right main area */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1 border-b border-gray-200 mb-4">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            borderBottom: '1px solid #E8E3DB',
+            marginBottom: '16px',
+          }}>
             <button
               onClick={() => setActiveTab('meetings')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                activeTab === 'meetings'
-                  ? 'border-emerald-500 text-emerald-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+              onMouseEnter={() => setHoveredTab('meetings')}
+              onMouseLeave={() => setHoveredTab(null)}
+              style={getTabStyle('meetings')}
             >
               Meetings ({meetings.length})
             </button>
             <button
               onClick={() => setActiveTab('actions')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                activeTab === 'actions'
-                  ? 'border-emerald-500 text-emerald-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+              onMouseEnter={() => setHoveredTab('actions')}
+              onMouseLeave={() => setHoveredTab(null)}
+              style={getTabStyle('actions')}
             >
               Actions ({actions.length})
             </button>
           </div>
 
           {activeTab === 'meetings' && (
-            <div className="space-y-3">
-              <div className="flex justify-end gap-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                 <button
                   onClick={() => { setShowTranscriptUpload(true); setShowAddMeeting(false); }}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 border border-emerald-300 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-50"
+                  onMouseEnter={() => setHoveredBtn('transcript')}
+                  onMouseLeave={() => setHoveredBtn(null)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '6px 12px',
+                    border: '1px solid #86EFAC',
+                    color: '#15803D',
+                    borderRadius: '10px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    background: hoveredBtn === 'transcript' ? '#F0FDF4' : 'transparent',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s',
+                  }}
                 >
                   <Sparkles size={14} />
                   Upload Transcript
                 </button>
                 <button
                   onClick={() => { setShowAddMeeting(true); setShowTranscriptUpload(false); }}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600"
+                  onMouseEnter={() => setHoveredBtn('addMeeting')}
+                  onMouseLeave={() => setHoveredBtn(null)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '6px 12px',
+                    background: hoveredBtn === 'addMeeting' ? '#15803D' : '#16a34a',
+                    color: 'white',
+                    borderRadius: '10px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s',
+                  }}
                 >
                   <Plus size={14} />
                   Add Meeting
@@ -251,11 +333,26 @@ export default function AccountDetail() {
           )}
 
           {activeTab === 'actions' && (
-            <div className="space-y-3">
-              <div className="flex justify-end">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <button
                   onClick={() => setShowAddAction(true)}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600"
+                  onMouseEnter={() => setHoveredBtn('addAction')}
+                  onMouseLeave={() => setHoveredBtn(null)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '6px 12px',
+                    background: hoveredBtn === 'addAction' ? '#15803D' : '#16a34a',
+                    color: 'white',
+                    borderRadius: '10px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s',
+                  }}
                 >
                   <Plus size={14} />
                   Add Action
@@ -285,7 +382,16 @@ export default function AccountDetail() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs text-gray-500 uppercase tracking-wide mb-0.5">{label}</label>
+      <label style={{
+        display: 'block',
+        fontSize: '12px',
+        color: '#9CA3AF',
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+        marginBottom: '2px',
+      }}>
+        {label}
+      </label>
       {children}
     </div>
   );

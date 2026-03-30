@@ -51,14 +51,31 @@ export default function InlineEdit({
           }
         }}
         disabled={saving || locked}
-        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-          value ? 'bg-emerald-500' : 'bg-gray-300'
-        } ${locked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        style={{
+          position: 'relative',
+          display: 'inline-flex',
+          height: '20px',
+          width: '36px',
+          alignItems: 'center',
+          borderRadius: '9999px',
+          transition: 'background-color 0.15s ease',
+          backgroundColor: value ? '#16a34a' : '#D1C9BC',
+          opacity: locked ? 0.5 : 1,
+          cursor: locked ? 'not-allowed' : 'pointer',
+          border: 'none',
+          padding: 0,
+        }}
       >
         <span
-          className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
-            value ? 'translate-x-4.5' : 'translate-x-0.5'
-          }`}
+          style={{
+            display: 'inline-block',
+            height: '14px',
+            width: '14px',
+            borderRadius: '9999px',
+            backgroundColor: '#ffffff',
+            transition: 'transform 0.15s ease',
+            transform: value ? 'translateX(18px)' : 'translateX(2px)',
+          }}
         />
       </button>
     );
@@ -67,7 +84,7 @@ export default function InlineEdit({
   if (variant === 'multiselect') {
     const selected = (Array.isArray(value) ? value : []) as string[];
     return (
-      <div className="flex flex-wrap gap-1">
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
         {options.map((opt) => {
           const isSelected = selected.includes(opt.value);
           return (
@@ -86,11 +103,32 @@ export default function InlineEdit({
                 }
               }}
               disabled={saving || locked}
-              className={`px-2 py-0.5 rounded text-xs border transition-colors ${
-                isSelected
-                  ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
-                  : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
-              }`}
+              style={{
+                paddingLeft: '8px',
+                paddingRight: '8px',
+                paddingTop: '2px',
+                paddingBottom: '2px',
+                borderRadius: '6px',
+                fontSize: '0.75rem',
+                lineHeight: '1rem',
+                borderWidth: '1px',
+                borderStyle: 'solid',
+                transition: 'background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease',
+                backgroundColor: isSelected ? '#DCFCE7' : '#FDFCF9',
+                borderColor: isSelected ? '#86EFAC' : '#E5E0D8',
+                color: isSelected ? '#15803D' : '#9CA3AF',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                if (!isSelected) {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#F5F0E8';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isSelected) {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#FDFCF9';
+                }
+              }}
             >
               {opt.label}
             </button>
@@ -103,7 +141,11 @@ export default function InlineEdit({
   const displayValue = () => {
     if (renderValue) return renderValue(value);
     if (value === null || value === undefined || value === '') {
-      return <span className="text-gray-400 italic">{placeholder}</span>;
+      return (
+        <span style={{ color: '#9CA3AF', fontStyle: 'italic' }}>
+          {placeholder}
+        </span>
+      );
     }
     if (variant === 'select') {
       const opt = options.find((o) => o.value === value);
@@ -119,11 +161,27 @@ export default function InlineEdit({
     return (
       <span
         onClick={() => !locked && setEditing(true)}
-        className={`inline-block min-w-[60px] rounded px-1 py-0.5 transition-colors ${
-          locked
-            ? 'text-gray-400 cursor-default'
-            : 'hover:bg-gray-100 cursor-pointer'
-        } ${saving ? 'opacity-50' : ''}`}
+        style={{
+          display: 'inline-block',
+          minWidth: '60px',
+          borderRadius: '6px',
+          paddingLeft: '4px',
+          paddingRight: '4px',
+          paddingTop: '2px',
+          paddingBottom: '2px',
+          transition: 'background-color 0.15s ease',
+          color: locked ? '#9CA3AF' : undefined,
+          cursor: locked ? 'default' : 'pointer',
+          opacity: saving ? 0.5 : 1,
+        }}
+        onMouseEnter={(e) => {
+          if (!locked) {
+            (e.currentTarget as HTMLSpanElement).style.backgroundColor = '#F5F0E8';
+          }
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLSpanElement).style.backgroundColor = 'transparent';
+        }}
       >
         {displayValue()}
       </span>
@@ -153,6 +211,18 @@ export default function InlineEdit({
     }
   };
 
+  const inputStyle: React.CSSProperties = {
+    border: '1px solid #E5E0D8',
+    borderRadius: '6px',
+    paddingLeft: '8px',
+    paddingRight: '8px',
+    paddingTop: '4px',
+    paddingBottom: '4px',
+    fontSize: '0.875rem',
+    lineHeight: '1.25rem',
+    outline: 'none',
+  };
+
   if (variant === 'textarea') {
     return (
       <textarea
@@ -167,7 +237,10 @@ export default function InlineEdit({
           }
         }}
         rows={3}
-        className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+        style={{
+          ...inputStyle,
+          width: '100%',
+        }}
       />
     );
   }
@@ -184,7 +257,7 @@ export default function InlineEdit({
           onSave(e.target.value || null).finally(() => setSaving(false));
         }}
         onBlur={() => setEditing(false)}
-        className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+        style={inputStyle}
       >
         <option value="">Not set</option>
         {options.map((opt) => (
@@ -211,7 +284,7 @@ export default function InlineEdit({
       }}
       onBlur={handleSave}
       onKeyDown={handleKeyDown}
-      className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+      style={inputStyle}
     />
   );
 }

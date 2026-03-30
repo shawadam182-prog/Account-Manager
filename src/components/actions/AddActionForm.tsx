@@ -1,6 +1,18 @@
 import { useState } from 'react';
 import { addAction } from '../../services/actionsService';
 
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  border: '1px solid #E5E0D8',
+  borderRadius: '6px',
+  padding: '6px 8px',
+  fontSize: '13px',
+  outline: 'none',
+  fontFamily: 'var(--font-sans)',
+  color: '#111827',
+  background: '#FDFCF9',
+};
+
 export default function AddActionForm({
   accountId,
   meetingId,
@@ -16,6 +28,8 @@ export default function AddActionForm({
   const [owner, setOwner] = useState('Millie');
   const [dueDate, setDueDate] = useState('');
   const [saving, setSaving] = useState(false);
+  const [primaryHover, setPrimaryHover] = useState(false);
+  const [cancelHover, setCancelHover] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +51,18 @@ export default function AddActionForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 space-y-2">
+    <form
+      onSubmit={handleSubmit}
+      style={{
+        background: '#F0FDF4',
+        border: '1px solid #86EFAC',
+        borderRadius: '10px',
+        padding: '12px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+      }}
+    >
       <input
         type="text"
         value={description}
@@ -45,13 +70,13 @@ export default function AddActionForm({
         placeholder="Action description..."
         required
         autoFocus
-        className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+        style={inputStyle}
       />
-      <div className="flex gap-2 items-center">
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
         <select
           value={owner}
           onChange={(e) => setOwner(e.target.value)}
-          className="border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+          style={{ ...inputStyle, width: 'auto' }}
         >
           <option value="Millie">Millie</option>
           <option value="Client">Client</option>
@@ -61,20 +86,42 @@ export default function AddActionForm({
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          className="border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+          style={{ ...inputStyle, width: 'auto' }}
         />
-        <div className="flex-1" />
+        <div style={{ flex: 1 }} />
         <button
           type="submit"
           disabled={saving}
-          className="px-3 py-1.5 bg-emerald-500 text-white rounded text-sm font-medium hover:bg-emerald-600 disabled:opacity-50"
+          onMouseEnter={() => setPrimaryHover(true)}
+          onMouseLeave={() => setPrimaryHover(false)}
+          style={{
+            padding: '6px 12px',
+            background: primaryHover ? '#15803D' : '#16a34a',
+            color: 'white',
+            borderRadius: '6px',
+            fontSize: '13px',
+            fontWeight: 500,
+            border: 'none',
+            cursor: saving ? 'not-allowed' : 'pointer',
+            opacity: saving ? 0.5 : 1,
+          }}
         >
           Save
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-3 py-1.5 border border-gray-300 text-gray-600 rounded text-sm hover:bg-gray-50"
+          onMouseEnter={() => setCancelHover(true)}
+          onMouseLeave={() => setCancelHover(false)}
+          style={{
+            padding: '6px 12px',
+            background: cancelHover ? '#FDFCF9' : 'transparent',
+            border: '1px solid #E5E0D8',
+            color: '#6B7280',
+            borderRadius: '6px',
+            fontSize: '13px',
+            cursor: 'pointer',
+          }}
         >
           Cancel
         </button>

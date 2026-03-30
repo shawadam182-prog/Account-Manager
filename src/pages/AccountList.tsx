@@ -50,11 +50,11 @@ export default function AccountList() {
   });
 
   if (loading) {
-    return <div className="text-gray-400 py-12 text-center">Loading...</div>;
+    return <div style={{ color: '#9CA3AF', padding: '48px 0', textAlign: 'center' }}>Loading...</div>;
   }
 
   return (
-    <div className="space-y-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ marginBottom: '20px' }}>
         <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#111827', margin: 0 }}>Accounts</h1>
         <p style={{ fontSize: '13px', color: '#9CA3AF', marginTop: '2px' }}>

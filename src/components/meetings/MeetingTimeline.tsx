@@ -16,7 +16,7 @@ export default function MeetingTimeline({
   }
 
   return (
-    <div className="space-y-3">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       {meetings.map((meeting, idx) => (
         <MeetingCard
           key={meeting.id}

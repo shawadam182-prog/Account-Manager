@@ -122,14 +122,14 @@ export default function Dashboard() {
         <p style={{ fontSize: '14px', color: '#9CA3AF', marginTop: '3px' }}>{today}</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '28px' }}>
+      <div className="stat-grid" style={{ marginBottom: '28px' }}>
         <StatCard label="Total Accounts" value={totalAccounts} sub="in your portfolio" color="#6366F1" icon={Users} />
         <StatCard label="Overdue Reports" value={overdueCount} sub="need action" color="#DC2626" icon={AlertTriangle} to="/accounts?report=Overdue" />
         <StatCard label="At Risk / Amber" value={amberRedCount} sub="accounts flagged" color="#D97706" icon={Clock} to="/accounts?rag=Amber,Red" />
         <StatCard label="Open Actions" value={openActionsCount} sub="to complete" color="#16A34A" icon={ListChecks} to="/actions" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+      <div className="section-grid">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
             <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#111827', margin: 0 }}>Needs Attention</h2>

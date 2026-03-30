@@ -47,7 +47,7 @@ export default function Sidebar() {
             })}
             onMouseEnter={(e) => {
               const el = e.currentTarget;
-              if (!el.classList.contains('active')) {
+              if (!el.getAttribute('aria-current')) {
                 el.style.background = 'rgba(255,255,255,0.05)';
                 el.style.color = 'rgba(255,255,255,0.75)';
               }

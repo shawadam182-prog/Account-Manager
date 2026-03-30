@@ -7,19 +7,13 @@ import StatusBadge from '../ui/StatusBadge';
 import MembershipBadge from '../ui/MembershipBadge';
 import LastContactBadge from '../ui/LastContactBadge';
 import HealthBadge from '../ui/HealthBadge';
-import { computeHealthScore } from '../../utils/healthScore';
+import { computeHealthScore, healthConfig } from '../../utils/healthScore';
 import { updateAccount } from '../../services/accountsService';
 
 type SortKey = 'company_name' | 'health' | 'report_status' | 'rag_status' | 'last_meeting_date' | 'renewal_month';
 type SortDir = 'asc' | 'desc';
 
 const HEALTH_ORDER = { critical: 0, risk: 1, monitor: 2, healthy: 3 };
-const HEALTH_BORDER: Record<string, string> = {
-  healthy: '#16a34a',
-  monitor: '#d97706',
-  risk: '#ea580c',
-  critical: '#dc2626',
-};
 
 function sortAccounts(accounts: Account[], key: SortKey, dir: SortDir): Account[] {
   return [...accounts].sort((a, b) => {
@@ -236,7 +230,7 @@ export default function AccountTable({ accounts }: { accounts: Account[] }) {
                 <td style={{
                   width: '3px',
                   padding: 0,
-                  background: isShell ? '#D1C9BC' : HEALTH_BORDER[health],
+                  background: isShell ? '#D1C9BC' : healthConfig[health].border,
                 }} />
 
                 <td style={{ padding: '14px 16px', verticalAlign: 'middle' }}>

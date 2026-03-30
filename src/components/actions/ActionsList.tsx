@@ -1,6 +1,17 @@
+import { useState } from 'react';
 import type { Action } from '../../lib/types';
 import { updateActionStatus } from '../../services/actionsService';
 import EmptyState from '../ui/EmptyState';
+
+function getOwnerBadgeStyle(owner: string): React.CSSProperties {
+  if (owner === 'Millie') {
+    return { background: '#DCFCE7', color: '#15803D' };
+  }
+  if (owner === 'Client') {
+    return { background: '#DBEAFE', color: '#1D4ED8' };
+  }
+  return { background: '#F5F0E8', color: '#6B7280' };
+}
 
 export default function ActionsList({
   actions,
@@ -23,11 +34,13 @@ export default function ActionsList({
   }
 
   return (
-    <div className="space-y-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {open.length > 0 && (
         <div>
-          <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Open ({open.length})</h4>
-          <div className="space-y-1.5">
+          <h4 style={{ fontSize: '12px', fontWeight: 500, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+            Open ({open.length})
+          </h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {open.map((action) => (
               <ActionRow key={action.id} action={action} onToggle={() => toggle(action)} />
             ))}
@@ -36,8 +49,10 @@ export default function ActionsList({
       )}
       {done.length > 0 && (
         <div>
-          <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Done ({done.length})</h4>
-          <div className="space-y-1.5">
+          <h4 style={{ fontSize: '12px', fontWeight: 500, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+            Done ({done.length})
+          </h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {done.map((action) => (
               <ActionRow key={action.id} action={action} onToggle={() => toggle(action)} />
             ))}
@@ -49,22 +64,50 @@ export default function ActionsList({
 }
 
 function ActionRow({ action, onToggle }: { action: Action; onToggle: () => void }) {
+  const [hover, setHover] = useState(false);
+
   return (
-    <label className="flex items-start gap-2 cursor-pointer p-2 rounded hover:bg-gray-50">
+    <label
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '8px',
+        cursor: 'pointer',
+        padding: '8px',
+        borderRadius: '6px',
+        background: hover ? '#FDFCF9' : 'transparent',
+      }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
       <input
         type="checkbox"
         checked={action.status === 'Done'}
         onChange={onToggle}
-        className="mt-0.5 rounded text-emerald-500 focus:ring-emerald-500"
+        style={{ marginTop: '2px', accentColor: '#16a34a' }}
       />
-      <span className={`flex-1 text-sm ${action.status === 'Done' ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+      <span
+        style={{
+          flex: 1,
+          fontSize: '13px',
+          color: action.status === 'Done' ? '#9CA3AF' : '#374151',
+          textDecoration: action.status === 'Done' ? 'line-through' : 'none',
+        }}
+      >
         {action.description}
       </span>
-      <span className={`text-xs px-1.5 py-0.5 rounded ${action.owner === 'Millie' ? 'bg-emerald-100 text-emerald-700' : action.owner === 'Client' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+      <span
+        style={{
+          fontSize: '12px',
+          padding: '2px 6px',
+          borderRadius: '6px',
+          ...getOwnerBadgeStyle(action.owner),
+        }}
+      >
         {action.owner}
       </span>
       {action.due_date && (
-        <span className="text-xs text-gray-400">
+        <span style={{ fontSize: '12px', color: '#9CA3AF' }}>
           {new Date(action.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
         </span>
       )}
