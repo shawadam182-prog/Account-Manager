@@ -1,11 +1,29 @@
-import Anthropic from "npm:@anthropic-ai/sdk";
-
-const client = new Anthropic({ apiKey: Deno.env.get("ANTHROPIC_API_KEY") });
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+async function callGemini(prompt: string): Promise<string> {
+  const response = await fetch(GEMINI_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.3, maxOutputTokens: 2000 },
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Gemini API error: ${response.status} ${err}`);
+  }
+
+  const data = await response.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -36,12 +54,7 @@ async function extractActions({ notes, accountName, meetingType }: {
   accountName: string;
   meetingType: string;
 }) {
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 800,
-    messages: [{
-      role: "user",
-      content: `You are helping an account manager at Planet Mark, a UK sustainability certification company.
+  const prompt = `You are helping an account manager at Planet Mark, a UK sustainability certification company.
 
 Extract action items from these meeting notes. For each action, identify:
 - The description (what needs to be done)
@@ -64,11 +77,9 @@ Rules:
 - Only extract concrete, actionable next steps — not discussion points
 - Maximum 6 actions
 - If there are no clear actions, return { "actions": [] }
-- Keep descriptions concise (under 15 words each)`,
-    }],
-  });
+- Keep descriptions concise (under 15 words each)`;
 
-  const text = response.content[0].type === "text" ? response.content[0].text : "";
+  const text = await callGemini(prompt);
   try {
     const clean = text.replace(/```json|```/g, "").trim();
     return JSON.parse(clean);
@@ -82,12 +93,7 @@ async function processTranscript({ transcript, accountName, accountContext }: {
   accountName: string;
   accountContext: string;
 }) {
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 2000,
-    messages: [{
-      role: "user",
-      content: `You are an expert account manager assistant at Planet Mark, a UK sustainability certification company that helps businesses measure and reduce their carbon footprint and achieve sustainability certifications (Business Certification, Advanced, Net Zero Committed).
+  const prompt = `You are an expert account manager assistant at Planet Mark, a UK sustainability certification company that helps businesses measure and reduce their carbon footprint and achieve sustainability certifications (Business Certification, Advanced, Net Zero Committed).
 
 Process this meeting transcript for account: ${accountName}
 
@@ -113,11 +119,9 @@ Respond with JSON only, no explanation:
 
 Rules for actions: only concrete next steps, max 8, concise descriptions under 15 words
 Rules for risks: only flag genuine concerns (unhappy client, considering leaving, payment issues, key contact leaving)
-Rules for opportunities: only flag genuine signals (mentioned expanding, interested in higher tier, asked about add-ons)`,
-    }],
-  });
+Rules for opportunities: only flag genuine signals (mentioned expanding, interested in higher tier, asked about add-ons)`;
 
-  const text = response.content[0].type === "text" ? response.content[0].text : "";
+  const text = await callGemini(prompt);
   try {
     const clean = text.replace(/```json|```/g, "").trim();
     return JSON.parse(clean);
