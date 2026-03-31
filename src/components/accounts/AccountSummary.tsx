@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sparkles, AlertTriangle, TrendingUp, ArrowRight, RefreshCw, ChevronDown, ChevronUp, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { callAI } from '../../services/aiService';
@@ -35,12 +35,17 @@ export default function AccountSummary({ account, meetings, actions, onSave }: {
   actions: Action[];
   onSave: (summary: AccountSummaryData) => Promise<void>;
 }) {
-  // Load existing summary from account on mount
-  const existing = account.ai_summary as AccountSummaryData | null;
-  const [summary, setSummary] = useState<AccountSummaryData | null>(existing);
+  const [summary, setSummary] = useState<AccountSummaryData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(true);
+
+  // Load saved summary from account data
+  useEffect(() => {
+    if (account.ai_summary && !summary && !loading) {
+      setSummary(account.ai_summary as AccountSummaryData);
+    }
+  }, [account.ai_summary]);
 
   const generateSummary = async () => {
     setLoading(true);
