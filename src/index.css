@@ -71,3 +71,22 @@ body {
   outline: 2px solid var(--color-brand-primary);
   outline-offset: 2px;
 }
+
+/* Account Detail Layout */
+.detail-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detail-sidebar {
+  position: sticky;
+  top: 32px;
+}

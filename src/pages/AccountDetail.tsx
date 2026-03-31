@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Sparkles } from 'lucide-react';
+import { ArrowLeft, Plus, Sparkles, Building2, FileText, Users, Calendar, DollarSign, Info } from 'lucide-react';
+import { motion } from 'framer-motion';
 import type { Account, Meeting, Action } from '../lib/types';
 import { getAccount, updateAccount } from '../services/accountsService';
 import { getMeetingsForAccount } from '../services/meetingsService';
@@ -59,8 +60,6 @@ export default function AccountDetail() {
   const [showAddMeeting, setShowAddMeeting] = useState(false);
   const [showAddAction, setShowAddAction] = useState(false);
   const [showTranscriptUpload, setShowTranscriptUpload] = useState(false);
-  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
-  const [hoveredBtn, setHoveredBtn] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!id) return;
@@ -93,46 +92,19 @@ export default function AccountDetail() {
 
   if (loading || !account) {
     return (
-      <div style={{ color: '#9CA3AF', paddingTop: '48px', paddingBottom: '48px', textAlign: 'center' }}>
-        Loading...
-      </div>
+      <div className="text-zinc-400 py-12 text-center">Loading...</div>
     );
   }
 
-  const getTabStyle = (tab: 'meetings' | 'actions'): React.CSSProperties => {
-    const isActive = activeTab === tab;
-    const isHovered = hoveredTab === tab;
-    return {
-      padding: '8px 16px',
-      fontSize: '14px',
-      fontWeight: 500,
-      borderBottom: `2px solid ${isActive ? '#16a34a' : 'transparent'}`,
-      marginBottom: '-1px',
-      transition: 'color 0.15s, border-color 0.15s',
-      color: isActive ? '#16a34a' : (isHovered ? '#374151' : '#9CA3AF'),
-      background: 'none',
-      border: 'none',
-      borderBottomStyle: 'solid',
-      borderBottomWidth: '2px',
-      borderBottomColor: isActive ? '#16a34a' : 'transparent',
-      cursor: 'pointer',
-    };
-  };
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6 pb-12"
+    >
       <Link
         to="/accounts"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '4px',
-          fontSize: '14px',
-          color: '#9CA3AF',
-          textDecoration: 'none',
-        }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#374151'; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#9CA3AF'; }}
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-400 hover:text-zinc-700 transition-colors"
       >
         <ArrowLeft size={14} />
         Back to accounts
@@ -140,41 +112,19 @@ export default function AccountDetail() {
 
       <div className="detail-layout">
         {/* Left sidebar */}
-        <div className="detail-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '10px',
-            border: '1px solid #E8E3DB',
-            padding: '20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-          }}>
-            <div>
-              <InlineEdit
-                value={account.company_name}
-                onSave={(v) => handleUpdate('company_name', v)}
-                renderValue={(v) => (
-                  <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', margin: 0 }}>
-                    {String(v)}
-                  </h2>
-                )}
-              />
-            </div>
-
-            <Field label="Membership Level">
-              <InlineEdit value={account.membership_level} variant="select" options={MEMBERSHIP_OPTIONS} onSave={(v) => handleUpdate('membership_level', v)} />
-            </Field>
-
-            <Field label="Add-Ons">
-              <InlineEdit value={account.add_ons} variant="multiselect" options={ADDON_OPTIONS} onSave={(v) => handleUpdate('add_ons', v)} />
-            </Field>
-
-            <Field label="Report Status">
-              <InlineEdit value={account.report_status} variant="select" options={REPORT_STATUS_OPTIONS} onSave={(v) => handleUpdate('report_status', v)} />
-            </Field>
-
-            <Field label="RAG Status">
+        <div className="detail-sidebar flex flex-col gap-5">
+          {/* Header card */}
+          <div className="bg-white/80 backdrop-blur-sm border border-zinc-200/80 rounded-2xl p-6 shadow-sm">
+            <InlineEdit
+              value={account.company_name}
+              onSave={(v) => handleUpdate('company_name', v)}
+              renderValue={(v) => (
+                <h2 className="text-xl font-bold tracking-tight text-zinc-900 m-0">
+                  {String(v)}
+                </h2>
+              )}
+            />
+            <div className="mt-4 flex items-center gap-3">
               <InlineEdit
                 value={account.rag_status}
                 variant="select"
@@ -182,128 +132,123 @@ export default function AccountDetail() {
                 onSave={(v) => handleUpdate('rag_status', v)}
                 renderValue={(v) => <RAGBadge status={v as Account['rag_status']} showLabel />}
               />
-            </Field>
+              <span className="text-zinc-300">|</span>
+              <InlineEdit
+                value={account.report_status}
+                variant="select"
+                options={REPORT_STATUS_OPTIONS}
+                onSave={(v) => handleUpdate('report_status', v)}
+                renderValue={(v) => (
+                  <span className={`text-sm font-semibold ${
+                    v === 'Overdue' ? 'text-red-600' :
+                    v === 'Report Delivered' ? 'text-green-600' :
+                    v === 'Data Submitted' ? 'text-blue-600' :
+                    v === 'In progress' ? 'text-amber-600' :
+                    'text-zinc-400 italic'
+                  }`}>
+                    {v ? String(v) : 'No report status'}
+                  </span>
+                )}
+              />
+            </div>
+          </div>
 
+          {/* Membership & Services */}
+          <SidebarSection icon={<Building2 size={14} />} title="Membership & Services">
+            <Field label="Membership Level">
+              <InlineEdit value={account.membership_level} variant="select" options={MEMBERSHIP_OPTIONS} onSave={(v) => handleUpdate('membership_level', v)} />
+            </Field>
+            <Field label="Add-Ons">
+              <InlineEdit value={account.add_ons} variant="multiselect" options={ADDON_OPTIONS} onSave={(v) => handleUpdate('add_ons', v)} />
+            </Field>
+          </SidebarSection>
+
+          {/* Contact */}
+          <SidebarSection icon={<Users size={14} />} title="Contact">
             <Field label="Main POC">
               <InlineEdit value={account.main_poc} onSave={(v) => handleUpdate('main_poc', v)} placeholder="Add contact..." />
             </Field>
-
             <Field label="Recurring Meetings">
               <InlineEdit value={account.recurring_meetings} variant="toggle" onSave={(v) => handleUpdate('recurring_meetings', v)} />
             </Field>
+          </SidebarSection>
 
+          {/* Reporting */}
+          <SidebarSection icon={<FileText size={14} />} title="Reporting">
             <Field label="Reporting Period">
               <InlineEdit value={account.reporting_period} variant="select" options={PERIOD_OPTIONS} onSave={(v) => handleUpdate('reporting_period', v)} />
             </Field>
-
-            <Field label="Renewal Month">
-              <InlineEdit value={account.renewal_month} variant="select" options={MONTH_OPTIONS} onSave={(v) => handleUpdate('renewal_month', v)} />
-            </Field>
-
             <Field label="Reporting Deadline">
               <InlineEdit value={account.reporting_deadline} variant="date" onSave={(v) => handleUpdate('reporting_deadline', v)} />
             </Field>
+          </SidebarSection>
 
+          {/* Dates & Renewal */}
+          <SidebarSection icon={<Calendar size={14} />} title="Renewal">
+            <Field label="Renewal Month">
+              <InlineEdit value={account.renewal_month} variant="select" options={MONTH_OPTIONS} onSave={(v) => handleUpdate('renewal_month', v)} />
+            </Field>
+          </SidebarSection>
+
+          {/* Financials */}
+          <SidebarSection icon={<DollarSign size={14} />} title="Financials">
             <Field label="Current ARR">
               <InlineEdit value={account.current_arr} variant="number" prefix="£" onSave={(v) => handleUpdate('current_arr', v)} />
             </Field>
-
             <Field label="Opportunity Value">
               <InlineEdit value={account.opportunity_value} variant="number" prefix="£" onSave={(v) => handleUpdate('opportunity_value', v)} />
             </Field>
-
             <Field label="Open Opportunity">
               <InlineEdit value={account.open_opportunity} onSave={(v) => handleUpdate('open_opportunity', v)} />
             </Field>
+          </SidebarSection>
 
+          {/* Additional Info */}
+          <SidebarSection icon={<Info size={14} />} title="Additional Info">
             <Field label="Industry">
               <InlineEdit value={account.industry} onSave={(v) => handleUpdate('industry', v)} />
             </Field>
-
             <Field label="Turnover">
               <InlineEdit value={account.turnover} variant="textarea" onSave={(v) => handleUpdate('turnover', v)} />
             </Field>
-
             <Field label="Relevant Info">
               <InlineEdit value={account.relevant_info} variant="textarea" onSave={(v) => handleUpdate('relevant_info', v)} />
             </Field>
-
             <Field label="CRM ID">
               <InlineEdit value={account.crm_id} locked placeholder="Not linked" onSave={() => Promise.resolve()} />
             </Field>
-          </div>
+          </SidebarSection>
         </div>
 
         {/* Right main area */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            borderBottom: '1px solid #E8E3DB',
-            marginBottom: '16px',
-          }}>
-            <button
+        <div className="min-w-0">
+          {/* Tabs */}
+          <div className="flex items-center gap-1 border-b border-zinc-200/80 mb-6">
+            <TabButton
+              active={activeTab === 'meetings'}
               onClick={() => setActiveTab('meetings')}
-              onMouseEnter={() => setHoveredTab('meetings')}
-              onMouseLeave={() => setHoveredTab(null)}
-              style={getTabStyle('meetings')}
-            >
-              Meetings ({meetings.length})
-            </button>
-            <button
+              label={`Meetings (${meetings.length})`}
+            />
+            <TabButton
+              active={activeTab === 'actions'}
               onClick={() => setActiveTab('actions')}
-              onMouseEnter={() => setHoveredTab('actions')}
-              onMouseLeave={() => setHoveredTab(null)}
-              style={getTabStyle('actions')}
-            >
-              Actions ({actions.length})
-            </button>
+              label={`Actions (${actions.length})`}
+            />
           </div>
 
           {activeTab === 'meetings' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div className="flex flex-col gap-4">
+              <div className="flex justify-end gap-2">
                 <button
                   onClick={() => { setShowTranscriptUpload(true); setShowAddMeeting(false); }}
-                  onMouseEnter={() => setHoveredBtn('transcript')}
-                  onMouseLeave={() => setHoveredBtn(null)}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    padding: '6px 12px',
-                    border: '1px solid #86EFAC',
-                    color: '#15803D',
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    background: hoveredBtn === 'transcript' ? '#F0FDF4' : 'transparent',
-                    cursor: 'pointer',
-                    transition: 'background 0.15s',
-                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 border border-green-300 text-green-700 rounded-xl text-sm font-semibold bg-transparent hover:bg-green-50 cursor-pointer transition-colors"
                 >
                   <Sparkles size={14} />
                   Upload Transcript
                 </button>
                 <button
                   onClick={() => { setShowAddMeeting(true); setShowTranscriptUpload(false); }}
-                  onMouseEnter={() => setHoveredBtn('addMeeting')}
-                  onMouseLeave={() => setHoveredBtn(null)}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    padding: '6px 12px',
-                    background: hoveredBtn === 'addMeeting' ? '#15803D' : '#16a34a',
-                    color: 'white',
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'background 0.15s',
-                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-primary hover:bg-brand-primary-hover text-white rounded-xl text-sm font-semibold border-none cursor-pointer transition-colors"
                 >
                   <Plus size={14} />
                   Add Meeting
@@ -339,26 +284,11 @@ export default function AccountDetail() {
           )}
 
           {activeTab === 'actions' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div className="flex flex-col gap-4">
+              <div className="flex justify-end">
                 <button
                   onClick={() => setShowAddAction(true)}
-                  onMouseEnter={() => setHoveredBtn('addAction')}
-                  onMouseLeave={() => setHoveredBtn(null)}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    padding: '6px 12px',
-                    background: hoveredBtn === 'addAction' ? '#15803D' : '#16a34a',
-                    color: 'white',
-                    borderRadius: '10px',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'background 0.15s',
-                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-primary hover:bg-brand-primary-hover text-white rounded-xl text-sm font-semibold border-none cursor-pointer transition-colors"
                 >
                   <Plus size={14} />
                   Add Action
@@ -381,6 +311,20 @@ export default function AccountDetail() {
           )}
         </div>
       </div>
+    </motion.div>
+  );
+}
+
+function SidebarSection({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white/80 backdrop-blur-sm border border-zinc-200/80 rounded-2xl shadow-sm overflow-hidden">
+      <div className="flex items-center gap-2 px-5 py-3 border-b border-zinc-100 bg-zinc-50/50">
+        <span className="text-zinc-400">{icon}</span>
+        <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest m-0">{title}</h3>
+      </div>
+      <div className="px-5 py-4 flex flex-col gap-4">
+        {children}
+      </div>
     </div>
   );
 }
@@ -388,17 +332,25 @@ export default function AccountDetail() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label style={{
-        display: 'block',
-        fontSize: '12px',
-        color: '#9CA3AF',
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-        marginBottom: '2px',
-      }}>
+      <label className="block text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mb-1">
         {label}
       </label>
       {children}
     </div>
+  );
+}
+
+function TabButton({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer bg-transparent border-x-0 border-t-0 ${
+        active
+          ? 'border-b-brand-primary text-brand-primary'
+          : 'border-b-transparent text-zinc-400 hover:text-zinc-700'
+      }`}
+    >
+      {label}
+    </button>
   );
 }
