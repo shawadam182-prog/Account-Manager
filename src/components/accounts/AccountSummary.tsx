@@ -43,7 +43,7 @@ export default function AccountSummary({ account, meetings, actions, onSave }: {
   // Load saved summary from account data
   useEffect(() => {
     if (account.ai_summary && !summary && !loading) {
-      setSummary(account.ai_summary as AccountSummaryData);
+      setSummary(account.ai_summary as unknown as AccountSummaryData);
     }
   }, [account.ai_summary]);
 
