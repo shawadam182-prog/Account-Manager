@@ -29,12 +29,15 @@ const TREND_CONFIG = {
   'New': { color: 'text-blue-600', label: 'New Account' },
 };
 
-export default function AccountSummary({ account, meetings, actions }: {
+export default function AccountSummary({ account, meetings, actions, onSave }: {
   account: Account;
   meetings: Meeting[];
   actions: Action[];
+  onSave: (summary: AccountSummaryData) => Promise<void>;
 }) {
-  const [summary, setSummary] = useState<AccountSummaryData | null>(null);
+  // Load existing summary from account on mount
+  const existing = account.ai_summary as AccountSummaryData | null;
+  const [summary, setSummary] = useState<AccountSummaryData | null>(existing);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(true);
@@ -111,7 +114,7 @@ Base everything on actual data. Be direct and actionable, not generic.`;
       } else {
         // The response may have our summary fields directly, or mixed with
         // processTranscript fields — extract what we need
-        setSummary({
+        const parsed: AccountSummaryData = {
           overallStatus: data.overallStatus || data.summary || '',
           keyHighlights: data.keyHighlights || data.keyPoints || [],
           risks: data.risks || [],
@@ -120,7 +123,10 @@ Base everything on actual data. Be direct and actionable, not generic.`;
           nextSteps: data.nextSteps || (data.actions || []).map((a: { description: string }) => a.description),
           engagementTrend: data.engagementTrend || 'Stable',
           lastContactSummary: data.lastContactSummary || '',
-        });
+        };
+        setSummary(parsed);
+        // Persist to database
+        await onSave(parsed);
       }
     } catch {
       setError('Failed to generate summary. Please try again.');

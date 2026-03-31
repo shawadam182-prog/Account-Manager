@@ -37,6 +37,7 @@ export interface Account {
   turnover: string | null;
   industry: string | null;
   crm_id: string | null;
+  ai_summary: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
   last_meeting_date?: string | null;
