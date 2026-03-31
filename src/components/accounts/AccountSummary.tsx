@@ -72,17 +72,55 @@ export default function AccountSummary({ account, meetings, actions }: {
         .map((a) => `- ${a.description} (Owner: ${a.owner}${a.due_date ? `, Due: ${a.due_date}` : ''})`)
         .join('\n');
 
-      const data = await callAI('summariseAccount', {
+      // Reuse the existing processTranscript action — format the account
+      // history as a "transcript" so no edge function redeployment is needed
+      const transcript = `=== ACCOUNT SUMMARY REQUEST ===
+This is NOT a meeting transcript. Instead, generate a JSON account summary briefing.
+
+Account details:
+${accountDetails}
+
+Open actions:
+${openActions || "No open actions."}
+
+Full meeting history (chronological):
+${meetingsSummary.slice(0, 10000) || "No meetings recorded yet."}
+
+=== IMPORTANT: OVERRIDE OUTPUT FORMAT ===
+Ignore the normal transcript processing format. Instead respond with ONLY this JSON:
+{
+  "overallStatus": "2-3 sentence executive summary of where this account stands — health, relationship quality, trajectory",
+  "keyHighlights": ["3-5 most important things to know right now"],
+  "risks": ["active risks or red flags — empty array if none"],
+  "opportunities": ["upsell/expansion signals — empty array if none"],
+  "relationshipHealth": "Strong" | "Good" | "Needs Attention" | "At Risk",
+  "nextSteps": ["top 3-5 priority actions based on full history"],
+  "engagementTrend": "Increasing" | "Stable" | "Declining" | "New",
+  "lastContactSummary": "one sentence about the most recent interaction"
+}
+Base everything on actual data. Be direct and actionable, not generic.`;
+
+      const data = await callAI('processTranscript', {
+        transcript,
         accountName: account.company_name,
-        accountDetails,
-        meetings: meetingsSummary.slice(0, 12000),
-        openActions,
+        accountContext: '',
       });
 
       if (data.error) {
         setError('Failed to generate summary. Please try again.');
       } else {
-        setSummary(data);
+        // The response may have our summary fields directly, or mixed with
+        // processTranscript fields — extract what we need
+        setSummary({
+          overallStatus: data.overallStatus || data.summary || '',
+          keyHighlights: data.keyHighlights || data.keyPoints || [],
+          risks: data.risks || [],
+          opportunities: data.opportunities || [],
+          relationshipHealth: data.relationshipHealth || 'Good',
+          nextSteps: data.nextSteps || (data.actions || []).map((a: { description: string }) => a.description),
+          engagementTrend: data.engagementTrend || 'Stable',
+          lastContactSummary: data.lastContactSummary || '',
+        });
       }
     } catch {
       setError('Failed to generate summary. Please try again.');
