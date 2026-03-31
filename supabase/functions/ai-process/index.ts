@@ -36,6 +36,7 @@ Deno.serve(async (req) => {
     let result;
     if (action === "extractActions") result = await extractActions(payload);
     else if (action === "processTranscript") result = await processTranscript(payload);
+    else if (action === "summariseAccount") result = await summariseAccount(payload);
     else return new Response(JSON.stringify({ error: "Unknown action" }), { status: 400, headers: corsHeaders });
 
     return new Response(JSON.stringify(result), {
@@ -120,6 +121,55 @@ Respond with JSON only, no explanation:
 Rules for actions: only concrete next steps, max 8, concise descriptions under 15 words
 Rules for risks: only flag genuine concerns (unhappy client, considering leaving, payment issues, key contact leaving)
 Rules for opportunities: only flag genuine signals (mentioned expanding, interested in higher tier, asked about add-ons)`;
+
+  const text = await callGemini(prompt);
+  try {
+    const clean = text.replace(/```json|```/g, "").trim();
+    return JSON.parse(clean);
+  } catch {
+    return { error: "Failed to parse AI response", raw: text };
+  }
+}
+
+async function summariseAccount({ accountName, accountDetails, meetings, openActions }: {
+  accountName: string;
+  accountDetails: string;
+  meetings: string;
+  openActions: string;
+}) {
+  const prompt = `You are an expert account manager assistant at Planet Mark, a UK sustainability certification company.
+
+An account manager needs a quick briefing on the current status of this account. Analyse ALL the meeting history, notes, and open actions to produce a comprehensive but concise account summary.
+
+Account: ${accountName}
+
+Account details:
+${accountDetails}
+
+Meeting history (chronological):
+${meetings || "No meetings recorded yet."}
+
+Open actions:
+${openActions || "No open actions."}
+
+Respond with JSON only, no explanation:
+{
+  "overallStatus": "A 2-3 sentence executive summary of where this account stands right now — the overall health, relationship quality, and trajectory",
+  "keyHighlights": ["3-5 most important things the account manager should know about this account right now"],
+  "risks": ["Any active risks, concerns, or red flags — empty array if none"],
+  "opportunities": ["Any upsell, expansion, or deepening opportunities — empty array if none"],
+  "relationshipHealth": "Strong" | "Good" | "Needs Attention" | "At Risk",
+  "nextSteps": ["Top 3-5 recommended priority actions the account manager should focus on, based on the full history"],
+  "engagementTrend": "Increasing" | "Stable" | "Declining" | "New",
+  "lastContactSummary": "One sentence about what happened in the most recent interaction"
+}
+
+Rules:
+- Base everything on the actual data provided — do not invent or assume
+- Be direct and useful, not generic — the AM needs actionable intelligence
+- If there is limited data, say so honestly rather than padding with generic advice
+- Keep highlights and next steps specific to this account
+- For relationshipHealth, consider meeting frequency, action follow-through, risks mentioned, and overall tone`;
 
   const text = await callGemini(prompt);
   try {

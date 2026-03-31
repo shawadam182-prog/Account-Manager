@@ -13,6 +13,7 @@ import AddMeetingForm from '../components/meetings/AddMeetingForm';
 import ActionsList from '../components/actions/ActionsList';
 import AddActionForm from '../components/actions/AddActionForm';
 import TranscriptUpload from '../components/meetings/TranscriptUpload';
+import AccountSummary from '../components/accounts/AccountSummary';
 
 const MEMBERSHIP_OPTIONS = [
   { value: 'Business Certification', label: 'Business Certification' },
@@ -221,7 +222,10 @@ export default function AccountDetail() {
         </div>
 
         {/* Right main area */}
-        <div className="min-w-0">
+        <div className="min-w-0 flex flex-col gap-6">
+          {/* AI Summary */}
+          <AccountSummary account={account} meetings={meetings} actions={actions} />
+
           {/* Tabs */}
           <div className="flex items-center gap-1 border-b border-zinc-200/80 mb-6">
             <TabButton
