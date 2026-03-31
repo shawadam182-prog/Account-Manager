@@ -8,7 +8,7 @@
   --color-brand-primary: #16a34a;
   --color-brand-primary-hover: #15803d;
   --color-brand-surface: #ffffff;
-  --color-brand-background: #FCFCFA; 
+  --color-brand-background: #FFFFFF; 
   --color-brand-text: #09090b; 
   --color-brand-muted: #71717a; 
   --color-brand-border: #e4e4e7; 
@@ -26,17 +26,17 @@ body {
   margin: 0;
 }
 
-/* Linear-style Ambient Drop Glow */
+/* Subtle dot grid pattern on the background */
 .ambient-glow {
   position: absolute;
-  top: -150px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100vw;
-  height: 600px;
-  background: radial-gradient(ellipse at top center, rgba(22, 163, 74, 0.08) 0%, transparent 60%);
+  inset: 0;
   pointer-events: none;
   z-index: 0;
+  background-image: radial-gradient(circle, #e4e4e7 0.75px, transparent 0.75px);
+  background-size: 24px 24px;
+  opacity: 0.5;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 100%);
 }
 
 .content-layer {
