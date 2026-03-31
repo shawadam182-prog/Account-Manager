@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, Clock, ListChecks, TrendingUp, CalendarDays, Users, CheckCircle } from 'lucide-react';
+import {
+  AlertTriangle, Clock, ListChecks, Users, CheckCircle,
+  CalendarDays, TrendingUp, ArrowRight, CircleAlert,
+} from 'lucide-react';
 import type { Account, Meeting, Action } from '../lib/types';
 import { getAccounts } from '../services/accountsService';
 import { getRecentMeetings } from '../services/meetingsService';
 import { getAllOpenActions } from '../services/actionsService';
-import MembershipBadge from '../components/ui/MembershipBadge';
 import RAGBadge from '../components/ui/RAGBadge';
-import StatusBadge from '../components/ui/StatusBadge';
 import HealthBadge from '../components/ui/HealthBadge';
 import { SkeletonCard, SkeletonTable } from '../components/ui/Skeleton';
 import { computeHealthScore } from '../utils/healthScore';
@@ -28,38 +29,114 @@ function getUpcomingRenewalMonths(): string[] {
   );
 }
 
-function StatTab({
-  label, value, color, icon: Icon, to,
+/* ------------------------------------------------------------------ */
+/*  Stat Card — colourful, rounded, inspired by reference design       */
+/* ------------------------------------------------------------------ */
+function StatCard({
+  label, value, subtitle, icon: Icon, bg, iconBg, color, to,
 }: {
-  label: string; value: number;
-  color: string; icon: React.ElementType; to?: string;
+  label: string;
+  value: number;
+  subtitle?: string;
+  icon: React.ElementType;
+  bg: string;
+  iconBg: string;
+  color: string;
+  to?: string;
 }) {
-  const inner = (
+  const card = (
     <div
-      className="flex items-center gap-3 px-5 py-3.5 rounded-xl bg-white/60 backdrop-blur-md border border-zinc-200/80 transition-all duration-200 hover:shadow-md hover:bg-white/90 group"
-      style={{ cursor: to ? 'pointer' : 'default' }}
+      className="relative overflow-hidden rounded-2xl p-5 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg group"
+      style={{ background: bg, minWidth: 0 }}
     >
-      <div
-        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110"
-        style={{ background: color + '15' }}
-      >
-        <Icon size={18} color={color} />
-      </div>
-      <div className="flex flex-col">
-        <span className="text-xl font-extrabold text-zinc-900 tracking-tight font-mono leading-none">
-          {value}
-        </span>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mt-0.5">
+      <div className="flex items-start justify-between mb-4">
+        <span className="text-xs font-bold uppercase tracking-widest" style={{ color }}>
           {label}
         </span>
+        <div
+          className="w-8 h-8 rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-110"
+          style={{ background: iconBg }}
+        >
+          <Icon size={16} style={{ color }} />
+        </div>
+      </div>
+      <div className="flex items-end gap-2">
+        <span className="text-3xl font-extrabold tracking-tight font-mono leading-none" style={{ color }}>
+          {value}
+        </span>
+        {subtitle && (
+          <span className="text-xs font-semibold mb-0.5 opacity-70" style={{ color }}>
+            {subtitle}
+          </span>
+        )}
       </div>
     </div>
   );
 
-  if (to) return <Link to={to} className="outline-none focus-visible:ring-2 focus-visible:ring-brand-primary rounded-xl">{inner}</Link>;
-  return inner;
+  if (to) {
+    return (
+      <Link to={to} className="no-underline outline-none focus-visible:ring-2 focus-visible:ring-brand-primary rounded-2xl">
+        {card}
+      </Link>
+    );
+  }
+  return card;
 }
 
+/* ------------------------------------------------------------------ */
+/*  Section Card wrapper                                                */
+/* ------------------------------------------------------------------ */
+function SectionCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`bg-white/80 backdrop-blur-xl rounded-2xl border border-zinc-200/60 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+function SectionHeader({ title, icon: Icon, badge, action }: {
+  title: string;
+  icon?: React.ElementType;
+  badge?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">
+      <div className="flex items-center gap-2.5">
+        {Icon && <Icon size={16} className="text-zinc-400" />}
+        <h2 className="text-sm font-bold text-zinc-800 tracking-tight m-0">{title}</h2>
+        {badge && (
+          <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 text-[10px] font-bold">
+            {badge}
+          </span>
+        )}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Priority Row                                                        */
+/* ------------------------------------------------------------------ */
+function PriorityRow({ dot, children, trailing, borderBottom = true }: {
+  dot: string;
+  children: React.ReactNode;
+  trailing?: React.ReactNode;
+  borderBottom?: boolean;
+}) {
+  return (
+    <div className={`flex items-center gap-3 px-5 py-3 ${borderBottom ? 'border-b border-zinc-50' : ''}`}>
+      <div className="w-2 h-2 rounded-full shrink-0" style={{ background: dot }} />
+      <div className="flex-1 min-w-0">{children}</div>
+      {trailing && <div className="shrink-0">{trailing}</div>}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main Dashboard                                                      */
+/* ------------------------------------------------------------------ */
 export default function Dashboard() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -76,24 +153,19 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  const today = new Date().toLocaleDateString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  });
+
   if (loading) {
     return (
-      <div>
-        <div style={{ marginBottom: '28px' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#111827', margin: 0 }}>
-            {getGreeting()}, Millie
-          </h1>
-          <p style={{ fontSize: '14px', color: '#9CA3AF', marginTop: '3px' }}>
-            {new Date().toLocaleDateString('en-GB', {
-              weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-            })}
-          </p>
+      <div className="space-y-8 pb-12">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-zinc-900 m-0">{getGreeting()}, Millie</h1>
+          <p className="text-sm text-zinc-400 mt-1">{today}</p>
         </div>
-        <div className="flex flex-wrap gap-3" style={{ marginBottom: '28px' }}>
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
+        <div className="grid grid-cols-4 gap-4">
+          <SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard />
         </div>
         <SkeletonTable rows={5} />
       </div>
@@ -104,6 +176,7 @@ export default function Dashboard() {
   const amberRedCount = accounts.filter(a => a.rag_status === 'Amber' || a.rag_status === 'Red').length;
   const openActionsCount = actions.length;
   const totalAccounts = accounts.length;
+  const greenCount = accounts.filter(a => a.rag_status === 'Green').length;
 
   const renewalMonths = getUpcomingRenewalMonths();
   const upcomingRenewals = accounts.filter(a => a.renewal_month && renewalMonths.includes(a.renewal_month));
@@ -115,18 +188,13 @@ export default function Dashboard() {
     })
     .slice(0, 6);
 
-  const today = new Date().toLocaleDateString('en-GB', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  });
-
-  // --- Priorities data ---
+  // Priorities
   const now = new Date();
   const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   const overdueActions = actions.filter(a => {
     if (a.status !== 'Open' || !a.due_date) return false;
-    const d = new Date(a.due_date + 'T00:00:00');
-    return d < todayDate;
+    return new Date(a.due_date + 'T00:00:00') < todayDate;
   });
 
   const staleAccounts = accounts.filter(
@@ -142,362 +210,305 @@ export default function Dashboard() {
     return d >= todayDate && d <= weekFromNow;
   });
 
-  const prioritiesEmpty =
-    overdueActions.length === 0 &&
-    staleAccounts.length === 0 &&
-    dueThisWeek.length === 0;
+  const prioritiesEmpty = overdueActions.length === 0 && staleAccounts.length === 0 && dueThisWeek.length === 0;
 
   const formatDate = (dateStr: string) =>
-    new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB', {
-      day: 'numeric', month: 'short',
-    });
+    new Date(dateStr + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
   return (
-    <motion.div 
+    <motion.div
       initial="hidden"
       animate="show"
       variants={{
         hidden: { opacity: 0 },
-        show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+        show: { opacity: 1, transition: { staggerChildren: 0.08 } },
       }}
-      className="space-y-8 pb-12"
+      className="space-y-7 pb-12"
     >
-      <motion.div 
-        variants={{ hidden: { opacity: 0, x: -20 }, show: { opacity: 1, x: 0 } }}
-      >
-        <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 m-0">
+      {/* Header */}
+      <motion.div variants={{ hidden: { opacity: 0, y: -10 }, show: { opacity: 1, y: 0 } }}>
+        <h1 className="text-2xl font-extrabold tracking-tight text-zinc-900 m-0">
           {getGreeting()}, Millie
         </h1>
-        <p className="text-sm font-semibold text-zinc-500 mt-2 uppercase tracking-widest">{today}</p>
+        <p className="text-sm text-zinc-400 mt-1 font-medium">{today}</p>
       </motion.div>
 
+      {/* Stat Cards */}
       <motion.div
-        variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
-        className="flex flex-wrap gap-3"
+        variants={{ hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } }}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
       >
-        <StatTab label="Total Accounts" value={totalAccounts} color="#6366F1" icon={Users} />
-        <StatTab label="Overdue Reports" value={overdueCount} color="#DC2626" icon={AlertTriangle} to="/accounts?report=Overdue" />
-        <StatTab label="At Risk / Amber" value={amberRedCount} color="#D97706" icon={Clock} to="/accounts?rag=Amber,Red" />
-        <StatTab label="Open Actions" value={openActionsCount} color="#16A34A" icon={ListChecks} to="/actions" />
+        <StatCard
+          label="Total Accounts"
+          value={totalAccounts}
+          subtitle={`${greenCount} green`}
+          icon={Users}
+          bg="#F3E8FF"
+          iconBg="#E9D5FF"
+          color="#7C3AED"
+        />
+        <StatCard
+          label="Overdue Reports"
+          value={overdueCount}
+          subtitle="need action"
+          icon={AlertTriangle}
+          bg="#FFE4E6"
+          iconBg="#FECDD3"
+          color="#E11D48"
+          to="/accounts?report=Overdue"
+        />
+        <StatCard
+          label="At Risk"
+          value={amberRedCount}
+          subtitle="amber + red"
+          icon={Clock}
+          bg="#FEF3C7"
+          iconBg="#FDE68A"
+          color="#B45309"
+          to="/accounts?rag=Amber,Red"
+        />
+        <StatCard
+          label="Open Actions"
+          value={openActionsCount}
+          subtitle={overdueActions.length > 0 ? `${overdueActions.length} overdue` : 'on track'}
+          icon={ListChecks}
+          bg="#D1FAE5"
+          iconBg="#A7F3D0"
+          color="#047857"
+          to="/actions"
+        />
       </motion.div>
 
-      {/* ===== Your Priorities Today ===== */}
-      <motion.div 
-        variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
-        className="bg-white/80 backdrop-blur-xl rounded-2xl border border-zinc-200/80 p-8 shadow-sm hover:shadow-lg transition-shadow duration-300"
+      {/* Main Grid — Priorities + Needs Attention */}
+      <motion.div
+        variants={{ hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } }}
+        className="grid grid-cols-1 lg:grid-cols-2 gap-5"
       >
-        <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#111827', margin: '0 0 16px 0' }}>
-          Your Priorities Today
-        </h2>
-
-        {prioritiesEmpty ? (
-          <div style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            justifyContent: 'center', padding: '32px 0', color: '#9CA3AF',
-          }}>
-            <CheckCircle size={36} style={{ marginBottom: '10px', color: '#16a34a' }} />
-            <p style={{ fontSize: '14px', fontWeight: 500, color: '#111827' }}>You're all caught up!</p>
-            <p style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '2px' }}>No overdue actions, stale accounts, or upcoming deadlines.</p>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-            {/* Overdue Actions */}
-            {overdueActions.length > 0 && (
-              <div>
-                <p style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#DC2626', marginBottom: '8px' }}>
-                  Overdue Actions ({overdueActions.length})
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
-                  {overdueActions.slice(0, 5).map(a => (
-                    <div
-                      key={a.id}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '10px',
-                        padding: '8px 0',
-                        borderBottom: '1px solid #F5F0E8',
-                      }}
-                    >
-                      <div style={{
-                        width: '8px', height: '8px', borderRadius: '50%',
-                        background: '#DC2626', flexShrink: 0,
-                      }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: '13px', color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {a.description}
-                        </p>
-                        {a.account && (
-                          <Link
-                            to={`/accounts/${a.account.id}`}
-                            style={{ fontSize: '12px', color: '#16a34a', textDecoration: 'none' }}
-                            onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
-                            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
-                          >
-                            {a.account.company_name}
-                          </Link>
-                        )}
-                      </div>
-                      {a.due_date && (
-                        <span style={{ fontSize: '11px', color: '#DC2626', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
-                          {formatDate(a.due_date)}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                {overdueActions.length > 5 && (
-                  <Link to="/actions" style={{ fontSize: '12px', color: '#16a34a', textDecoration: 'none', marginTop: '6px', display: 'inline-block' }}>
-                    View all {overdueActions.length} overdue →
-                  </Link>
-                )}
-              </div>
-            )}
-
-            {/* Stale Accounts */}
-            {staleAccounts.length > 0 && (
-              <div>
-                <p style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#D97706', marginBottom: '8px' }}>
-                  Stale Accounts ({staleAccounts.length})
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
-                  {staleAccounts.slice(0, 5).map(a => (
-                    <div
-                      key={a.id}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '10px',
-                        padding: '8px 0',
-                        borderBottom: '1px solid #F5F0E8',
-                      }}
-                    >
-                      <div style={{
-                        width: '8px', height: '8px', borderRadius: '50%',
-                        background: '#D97706', flexShrink: 0,
-                      }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <Link
-                          to={`/accounts/${a.id}`}
-                          style={{ fontSize: '13px', fontWeight: 500, color: '#111827', textDecoration: 'none' }}
-                          onMouseEnter={(e) => (e.currentTarget.style.color = '#16a34a')}
-                          onMouseLeave={(e) => (e.currentTarget.style.color = '#111827')}
-                        >
-                          {a.company_name}
+        {/* Priorities */}
+        <SectionCard>
+          <SectionHeader
+            title="Your Priorities"
+            icon={CircleAlert}
+            badge={prioritiesEmpty ? undefined : `${overdueActions.length + staleAccounts.length + dueThisWeek.length}`}
+          />
+          {prioritiesEmpty ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <CheckCircle size={32} className="text-green-500 mb-2" />
+              <p className="text-sm font-semibold text-zinc-700">You're all caught up!</p>
+              <p className="text-xs text-zinc-400 mt-0.5">No overdue items or stale accounts.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-zinc-50">
+              {/* Overdue */}
+              {overdueActions.length > 0 && (
+                <div className="py-3">
+                  <p className="px-5 text-[10px] font-bold uppercase tracking-widest text-red-500 mb-1">
+                    Overdue ({overdueActions.length})
+                  </p>
+                  {overdueActions.slice(0, 4).map((a, i) => (
+                    <PriorityRow key={a.id} dot="#E11D48" borderBottom={i < Math.min(overdueActions.length, 4) - 1}>
+                      <p className="text-[13px] text-zinc-800 m-0 truncate">{a.description}</p>
+                      {a.account && (
+                        <Link to={`/accounts/${a.account.id}`} className="text-xs text-brand-primary hover:underline">
+                          {a.account.company_name}
                         </Link>
-                      </div>
-                      <span style={{ fontSize: '12px', color: '#9CA3AF', flexShrink: 0 }}>
-                        {a.days_since_contact} days since last contact
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Due This Week */}
-            {dueThisWeek.length > 0 && (
-              <div>
-                <p style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#3B82F6', marginBottom: '8px' }}>
-                  Due This Week ({dueThisWeek.length})
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
-                  {dueThisWeek.slice(0, 5).map(a => (
-                    <div
-                      key={a.id}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '10px',
-                        padding: '8px 0',
-                        borderBottom: '1px solid #F5F0E8',
-                      }}
-                    >
-                      <div style={{
-                        width: '8px', height: '8px', borderRadius: '50%',
-                        background: '#3B82F6', flexShrink: 0,
-                      }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: '13px', color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {a.description}
-                        </p>
-                        {a.account && (
-                          <Link
-                            to={`/accounts/${a.account.id}`}
-                            style={{ fontSize: '12px', color: '#16a34a', textDecoration: 'none' }}
-                            onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
-                            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
-                          >
-                            {a.account.company_name}
-                          </Link>
-                        )}
-                      </div>
-                      {a.due_date && (
-                        <span style={{ fontSize: '11px', color: '#3B82F6', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
-                          {formatDate(a.due_date)}
-                        </span>
                       )}
-                    </div>
+                    </PriorityRow>
+                  ))}
+                  {overdueActions.length > 4 && (
+                    <Link to="/actions" className="block px-5 py-2 text-xs font-semibold text-brand-primary hover:underline">
+                      View all {overdueActions.length} overdue
+                    </Link>
+                  )}
+                </div>
+              )}
+
+              {/* Stale */}
+              {staleAccounts.length > 0 && (
+                <div className="py-3">
+                  <p className="px-5 text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-1">
+                    Needs Contact ({staleAccounts.length})
+                  </p>
+                  {staleAccounts.slice(0, 4).map((a, i) => (
+                    <PriorityRow
+                      key={a.id}
+                      dot="#D97706"
+                      borderBottom={i < Math.min(staleAccounts.length, 4) - 1}
+                      trailing={
+                        <span className="text-[11px] text-zinc-400 font-mono">{a.days_since_contact}d</span>
+                      }
+                    >
+                      <Link to={`/accounts/${a.id}`} className="text-[13px] font-medium text-zinc-800 hover:text-brand-primary transition-colors">
+                        {a.company_name}
+                      </Link>
+                    </PriorityRow>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
 
-          </div>
-        )}
-      </motion.div>
+              {/* Due this week */}
+              {dueThisWeek.length > 0 && (
+                <div className="py-3">
+                  <p className="px-5 text-[10px] font-bold uppercase tracking-widest text-blue-500 mb-1">
+                    Due This Week ({dueThisWeek.length})
+                  </p>
+                  {dueThisWeek.slice(0, 4).map((a, i) => (
+                    <PriorityRow
+                      key={a.id}
+                      dot="#3B82F6"
+                      borderBottom={i < Math.min(dueThisWeek.length, 4) - 1}
+                      trailing={a.due_date ? <span className="text-[11px] text-blue-500 font-mono">{formatDate(a.due_date)}</span> : undefined}
+                    >
+                      <p className="text-[13px] text-zinc-800 m-0 truncate">{a.description}</p>
+                      {a.account && (
+                        <Link to={`/accounts/${a.account.id}`} className="text-xs text-brand-primary hover:underline">
+                          {a.account.company_name}
+                        </Link>
+                      )}
+                    </PriorityRow>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </SectionCard>
 
-      <motion.div 
-        variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
-        className="section-grid"
-      >
-        <div>
-          <div className="flex items-center justify-between mb-4 px-1">
-            <h2 className="text-[15px] font-bold text-zinc-900 tracking-tight">Needs Attention</h2>
-            <Link to="/accounts" className="text-xs font-bold text-brand-primary hover:text-brand-primary-hover transition-colors">
-              View all →
-            </Link>
-          </div>
-          <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-zinc-200/80 overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
-            {attentionAccounts.length === 0 ? (
-              <p style={{ padding: '24px', color: '#9CA3AF', fontSize: '13px', textAlign: 'center' }}>
-                No accounts flagged as at risk
-              </p>
-            ) : (
-              attentionAccounts.map((a, i) => (
+        {/* Needs Attention */}
+        <SectionCard>
+          <SectionHeader
+            title="Needs Attention"
+            icon={AlertTriangle}
+            badge={attentionAccounts.length > 0 ? `${attentionAccounts.length}` : undefined}
+            action={
+              <Link to="/accounts" className="text-xs font-bold text-brand-primary hover:text-brand-primary-hover transition-colors flex items-center gap-1">
+                View all <ArrowRight size={12} />
+              </Link>
+            }
+          />
+          {attentionAccounts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <CheckCircle size={32} className="text-green-500 mb-2" />
+              <p className="text-sm font-semibold text-zinc-700">All accounts healthy</p>
+            </div>
+          ) : (
+            <div>
+              {attentionAccounts.map((a, i) => (
                 <Link
                   key={a.id}
                   to={`/accounts/${a.id}`}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '12px 16px',
-                    borderBottom: i < attentionAccounts.length - 1 ? '1px solid #F5F0E8' : 'none',
-                    textDecoration: 'none',
-                    transition: 'background 0.1s',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#FDFCF9')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  className={`flex items-center justify-between px-5 py-3.5 hover:bg-zinc-50/80 transition-colors ${
+                    i < attentionAccounts.length - 1 ? 'border-b border-zinc-50' : ''
+                  }`}
                 >
-                  <div>
-                    <p style={{ fontSize: '13px', fontWeight: 500, color: '#111827' }}>{a.company_name}</p>
-                    {a.main_poc && <p style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '1px' }}>{a.main_poc}</p>}
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-medium text-zinc-800 m-0 truncate">{a.company_name}</p>
+                    {a.main_poc && <p className="text-[11px] text-zinc-400 m-0 mt-0.5">{a.main_poc}</p>}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div className="flex items-center gap-2 shrink-0">
                     <HealthBadge account={a} />
-                    {a.report_status === 'Overdue' && <StatusBadge status={a.report_status} />}
                   </div>
                 </Link>
-              ))
-            )}
-          </div>
-        </div>
+              ))}
+            </div>
+          )}
+        </SectionCard>
+      </motion.div>
 
-        <div>
-          <div className="flex items-center justify-between mb-4 px-1">
-            <h2 className="text-[15px] font-bold text-zinc-900 tracking-tight flex items-center gap-2">
-              <CalendarDays size={18} className="text-blue-500" />
-              Upcoming Renewals
-            </h2>
-            <span className="text-xs font-semibold text-zinc-500">Next 90 days</span>
-          </div>
-          <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-zinc-200/80 overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
-            {upcomingRenewals.length === 0 ? (
-              <p style={{ padding: '24px', color: '#9CA3AF', fontSize: '13px', textAlign: 'center' }}>
-                No renewals in the next 90 days
-              </p>
-            ) : (
-              upcomingRenewals.map((a, i) => (
+      {/* Bottom Grid — Renewals + Recent Meetings */}
+      <motion.div
+        variants={{ hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } }}
+        className="grid grid-cols-1 lg:grid-cols-2 gap-5"
+      >
+        {/* Upcoming Renewals */}
+        <SectionCard>
+          <SectionHeader
+            title="Upcoming Renewals"
+            icon={CalendarDays}
+            badge="90 days"
+          />
+          {upcomingRenewals.length === 0 ? (
+            <p className="text-center text-zinc-400 text-sm py-10">No renewals in the next 90 days</p>
+          ) : (
+            <div>
+              {upcomingRenewals.map((a, i) => (
                 <Link
                   key={a.id}
                   to={`/accounts/${a.id}`}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '12px 16px',
-                    borderBottom: i < upcomingRenewals.length - 1 ? '1px solid #F5F0E8' : 'none',
-                    textDecoration: 'none',
-                    transition: 'background 0.1s',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#FDFCF9')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  className={`flex items-center justify-between px-5 py-3.5 hover:bg-zinc-50/80 transition-colors ${
+                    i < upcomingRenewals.length - 1 ? 'border-b border-zinc-50' : ''
+                  }`}
                 >
-                  <div>
-                    <p style={{ fontSize: '13px', fontWeight: 500, color: '#111827' }}>{a.company_name}</p>
-                    <MembershipBadge level={a.membership_level} compact />
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-medium text-zinc-800 m-0 truncate">{a.company_name}</p>
                   </div>
-                  <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{
-                      fontSize: '12px', fontWeight: 600, color: '#6366F1',
-                      background: '#EEF2FF', padding: '2px 8px', borderRadius: '4px',
-                    }}>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-lg">
                       {a.renewal_month}
                     </span>
                     <RAGBadge status={a.rag_status} />
                   </div>
                 </Link>
-              ))
-            )}
-          </div>
-        </div>
+              ))}
+            </div>
+          )}
+        </SectionCard>
 
-        <div className="col-span-1 md:col-span-2 mt-4">
-          <div className="flex items-center justify-between mb-4 px-1">
-            <h2 className="text-[15px] font-bold text-zinc-900 tracking-tight flex items-center gap-2">
-              <TrendingUp size={18} className="text-brand-primary" />
-              Recent Meetings
-            </h2>
-            <span className="text-xs font-semibold text-zinc-500">Last 14 days</span>
-          </div>
-          <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-zinc-200/80 overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
-            {meetings.length === 0 ? (
-              <p style={{ padding: '24px', color: '#9CA3AF', fontSize: '13px', textAlign: 'center' }}>
-                No meetings logged in the last 14 days
-              </p>
-            ) : (
-              meetings.map((m, i) => (
+        {/* Recent Meetings */}
+        <SectionCard>
+          <SectionHeader
+            title="Recent Meetings"
+            icon={TrendingUp}
+            badge="14 days"
+          />
+          {meetings.length === 0 ? (
+            <p className="text-center text-zinc-400 text-sm py-10">No meetings in the last 14 days</p>
+          ) : (
+            <div>
+              {meetings.slice(0, 8).map((m, i) => (
                 <div
                   key={m.id}
-                  style={{
-                    display: 'flex', alignItems: 'flex-start', gap: '12px',
-                    padding: '12px 16px',
-                    borderBottom: i < meetings.length - 1 ? '1px solid #F5F0E8' : 'none',
-                  }}
+                  className={`flex items-center gap-3.5 px-5 py-3 ${
+                    i < Math.min(meetings.length, 8) - 1 ? 'border-b border-zinc-50' : ''
+                  }`}
                 >
-                  <div style={{
-                    minWidth: '52px', textAlign: 'center',
-                    padding: '4px 6px', borderRadius: '6px',
-                    background: '#F5F3EE', border: '1px solid #E8E3DB',
-                  }}>
-                    <p style={{ fontSize: '16px', fontWeight: 700, color: '#111827', lineHeight: 1, fontFamily: 'var(--font-mono)' }}>
+                  {/* Date chip */}
+                  <div className="w-11 h-11 rounded-xl bg-zinc-100 flex flex-col items-center justify-center shrink-0">
+                    <span className="text-sm font-bold text-zinc-800 leading-none font-mono">
                       {new Date(m.meeting_date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric' })}
-                    </p>
-                    <p style={{ fontSize: '10px', fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase' }}>
+                    </span>
+                    <span className="text-[9px] font-bold text-zinc-400 uppercase">
                       {new Date(m.meeting_date + 'T12:00:00').toLocaleDateString('en-GB', { month: 'short' })}
-                    </p>
+                    </span>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="flex-1 min-w-0">
                     {m.account ? (
                       <Link
                         to={`/accounts/${m.account.id}`}
-                        style={{ fontSize: '13px', fontWeight: 600, color: '#111827', textDecoration: 'none' }}
-                        onMouseEnter={(e) => (e.currentTarget.style.color = '#16a34a')}
-                        onMouseLeave={(e) => (e.currentTarget.style.color = '#111827')}
+                        className="text-[13px] font-semibold text-zinc-800 hover:text-brand-primary transition-colors"
                       >
                         {m.account.company_name}
                       </Link>
                     ) : (
-                      <span style={{ fontSize: '13px', fontWeight: 500, color: '#9CA3AF' }}>
-                        {m.is_internal ? 'Internal meeting' : 'External'}
+                      <span className="text-[13px] text-zinc-400">
+                        {m.is_internal ? 'Internal' : 'External'}
                       </span>
                     )}
                     {m.notes && (
-                      <p style={{
-                        fontSize: '12px', color: '#9CA3AF', marginTop: '2px',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>
+                      <p className="text-xs text-zinc-400 m-0 mt-0.5 truncate">
                         {m.notes.split('\n')[0]}
                       </p>
                     )}
                   </div>
+                  {m.meeting_type && (
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider shrink-0">
+                      {m.meeting_type}
+                    </span>
+                  )}
                 </div>
-              ))
-            )}
-          </div>
-        </div>
+              ))}
+            </div>
+          )}
+        </SectionCard>
       </motion.div>
     </motion.div>
   );
