@@ -44,7 +44,7 @@ function MultiSelect({ label, param, options }: { label: string; param: string; 
         {label} {selected.length > 0 && `(${selected.length})`}
       </button>
       {open && (
-        <div className="absolute top-full left-0 mt-2 bg-white/95 backdrop-blur-xl border border-zinc-200/80 rounded-xl shadow-lg z-20 min-w-[180px] p-1">
+        <div className="absolute top-full left-0 mt-2 bg-white/95 backdrop-blur-xl border border-zinc-200/80 rounded-xl shadow-lg z-50 min-w-[180px] p-1">
           {options.map((opt) => (
             <label
               key={opt}
@@ -97,7 +97,7 @@ export default function AccountFilters({ totalCount, filteredCount }: { totalCou
   };
 
   return (
-    <div className="bg-white/70 backdrop-blur-md border border-zinc-200/80 rounded-2xl p-5 shadow-sm mb-6">
+    <div className="relative z-30 bg-white/70 backdrop-blur-md border border-zinc-200/80 rounded-2xl p-5 shadow-sm mb-6">
       <div className="flex items-center gap-3 flex-wrap">
         <input
           type="text"
