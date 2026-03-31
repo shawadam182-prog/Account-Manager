@@ -224,7 +224,14 @@ export default function AccountDetail() {
         {/* Right main area */}
         <div className="min-w-0 flex flex-col gap-6">
           {/* AI Summary */}
-          <AccountSummary account={account} meetings={meetings} actions={actions} />
+          <AccountSummary
+            account={account}
+            meetings={meetings}
+            actions={actions}
+            onSave={async (summary) => {
+              await handleUpdate('ai_summary', summary);
+            }}
+          />
 
           {/* Tabs */}
           <div className="flex items-center gap-1 border-b border-zinc-200/80 mb-6">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sparkles, AlertTriangle, TrendingUp, ArrowRight, RefreshCw, ChevronDown, ChevronUp, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { callAI } from '../../services/aiService';
@@ -29,15 +29,23 @@ const TREND_CONFIG = {
   'New': { color: 'text-blue-600', label: 'New Account' },
 };
 
-export default function AccountSummary({ account, meetings, actions }: {
+export default function AccountSummary({ account, meetings, actions, onSave }: {
   account: Account;
   meetings: Meeting[];
   actions: Action[];
+  onSave: (summary: AccountSummaryData) => Promise<void>;
 }) {
   const [summary, setSummary] = useState<AccountSummaryData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(true);
+
+  // Load saved summary from account data
+  useEffect(() => {
+    if (account.ai_summary && !summary && !loading) {
+      setSummary(account.ai_summary as AccountSummaryData);
+    }
+  }, [account.ai_summary]);
 
   const generateSummary = async () => {
     setLoading(true);
@@ -111,7 +119,7 @@ Base everything on actual data. Be direct and actionable, not generic.`;
       } else {
         // The response may have our summary fields directly, or mixed with
         // processTranscript fields — extract what we need
-        setSummary({
+        const parsed: AccountSummaryData = {
           overallStatus: data.overallStatus || data.summary || '',
           keyHighlights: data.keyHighlights || data.keyPoints || [],
           risks: data.risks || [],
@@ -120,7 +128,10 @@ Base everything on actual data. Be direct and actionable, not generic.`;
           nextSteps: data.nextSteps || (data.actions || []).map((a: { description: string }) => a.description),
           engagementTrend: data.engagementTrend || 'Stable',
           lastContactSummary: data.lastContactSummary || '',
-        });
+        };
+        setSummary(parsed);
+        // Persist to database
+        await onSave(parsed);
       }
     } catch {
       setError('Failed to generate summary. Please try again.');
