@@ -17,6 +17,8 @@ export type MeetingType =
   | 'Ad hoc';
 
 export type ActionStatus = 'Open' | 'Done' | 'Blocked';
+export type ActionPriority = 'High' | 'Medium' | 'Low';
+export type ActionCategory = 'Follow-up' | 'Data request' | 'Internal task' | 'Client deliverable' | 'Renewal' | 'Other';
 
 export interface Account {
   id: string;
@@ -67,6 +69,9 @@ export interface Action {
   owner: string;
   due_date: string | null;
   status: ActionStatus;
+  priority: ActionPriority;
+  category: ActionCategory | null;
+  notes: string | null;
   completed_at: string | null;
   created_at: string;
   account?: Pick<Account, 'id' | 'company_name'> | null;

@@ -35,10 +35,11 @@ export function exportAccountsCsv(accounts: Account[]) {
 }
 
 export function exportActionsCsv(actions: Action[]) {
-  const headers = ['Description', 'Owner', 'Status', 'Due Date', 'Account', 'Created'];
+  const headers = ['Description', 'Owner', 'Status', 'Priority', 'Category', 'Due Date', 'Account', 'Notes', 'Created'];
   const rows = actions.map((a) => [
-    a.description, a.owner, a.status, a.due_date ?? '',
-    a.account?.company_name ?? '', a.created_at?.slice(0, 10) ?? '',
+    a.description, a.owner, a.status, a.priority ?? 'Medium', a.category ?? '',
+    a.due_date ?? '', a.account?.company_name ?? '', a.notes ?? '',
+    a.created_at?.slice(0, 10) ?? '',
   ].map(escapeCsv).join(','));
 
   const csv = [headers.join(','), ...rows].join('\n');
