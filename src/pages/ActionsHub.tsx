@@ -3,11 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   Download, ChevronDown, ChevronRight, SlidersHorizontal,
-  ArrowUpDown, MessageSquare, X,
+  ArrowUpDown, MessageSquare, X, Plus,
 } from 'lucide-react';
 import type { Action, ActionPriority, ActionCategory } from '../lib/types';
 import { getAllActions, getAllOpenActions, updateActionStatus, updateAction } from '../services/actionsService';
 import { exportActionsCsv } from '../utils/csvExport';
+import AddActionForm from '../components/actions/AddActionForm';
 
 /* ------------------------------------------------------------------ */
 /*  Constants & helpers                                                 */
@@ -123,6 +124,7 @@ export default function ActionsHub() {
   const [sortBy, setSortBy] = useState<SortKey>('priority');
   const [groupBy, setGroupBy] = useState<GroupKey>('status');
   const [expandedNote, setExpandedNote] = useState<string | null>(null);
+  const [showAddAction, setShowAddAction] = useState(false);
 
   useEffect(() => { document.title = 'Actions — Planet Mark AM'; }, []);
 
@@ -173,7 +175,12 @@ export default function ActionsHub() {
   });
 
   const sorted = sortActions(filtered, sortBy);
-  const groups = groupActions(sorted, groupBy);
+
+  // Split into general (unlinked) and account-linked actions
+  const generalActions = sorted.filter(a => a.account_id === null);
+  const accountActions = sorted.filter(a => a.account_id !== null);
+  const generalGroups = groupActions(generalActions, groupBy);
+  const accountGroups = groupActions(accountActions, groupBy);
 
   const openCount = actions.filter(a => a.status === 'Open').length;
   const blockedCount = actions.filter(a => a.status === 'Blocked').length;
@@ -200,12 +207,20 @@ export default function ActionsHub() {
             )}
           </div>
         </div>
-        <button
-          onClick={() => exportActionsCsv(filtered)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-zinc-600 bg-white border border-zinc-200 rounded-xl hover:bg-zinc-50 hover:shadow-sm transition-all cursor-pointer"
-        >
-          <Download size={15} /> Export CSV
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowAddAction(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover border-none rounded-xl cursor-pointer transition-colors"
+          >
+            <Plus size={15} /> Add Action
+          </button>
+          <button
+            onClick={() => exportActionsCsv(filtered)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-zinc-600 bg-white border border-zinc-200 rounded-xl hover:bg-zinc-50 hover:shadow-sm transition-all cursor-pointer"
+          >
+            <Download size={15} /> Export CSV
+          </button>
+        </div>
       </motion.div>
 
       {/* Stats bar */}
@@ -302,24 +317,69 @@ export default function ActionsHub() {
         </div>
       </motion.div>
 
-      {/* Action groups */}
-      <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="flex flex-col gap-6">
-        {groups.length === 0 && (
-          <div className="text-center py-16 text-zinc-400 text-sm">No actions match your filters.</div>
-        )}
-        {groups.map(group => (
-          <ActionGroup
-            key={group.label}
-            label={group.label}
-            actions={group.actions}
-            onToggleStatus={toggleStatus}
-            onToggleBlocked={setBlocked}
-            onUpdatePriority={updatePriority}
-            expandedNote={expandedNote}
-            onToggleNote={id => setExpandedNote(expandedNote === id ? null : id)}
+      {/* Add Action form */}
+      {showAddAction && (
+        <motion.div variants={{ hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } }}>
+          <AddActionForm
+            accountId={null}
+            onSaved={() => { setShowAddAction(false); loadActions(); }}
+            onCancel={() => setShowAddAction(false)}
           />
-        ))}
-      </motion.div>
+        </motion.div>
+      )}
+
+      {/* General Actions */}
+      {generalGroups.length > 0 && (
+        <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="flex flex-col gap-4">
+          <div className="flex items-center gap-2.5 pl-1">
+            <h2 className="text-base font-bold text-zinc-800 m-0 tracking-tight">General Actions</h2>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 border border-zinc-200">
+              {generalActions.length}
+            </span>
+          </div>
+          {generalGroups.map(group => (
+            <ActionGroup
+              key={'general-' + group.label}
+              label={group.label}
+              actions={group.actions}
+              onToggleStatus={toggleStatus}
+              onToggleBlocked={setBlocked}
+              onUpdatePriority={updatePriority}
+              expandedNote={expandedNote}
+              onToggleNote={id => setExpandedNote(expandedNote === id ? null : id)}
+            />
+          ))}
+        </motion.div>
+      )}
+
+      {/* Account Actions */}
+      {accountGroups.length > 0 && (
+        <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="flex flex-col gap-4">
+          <div className="flex items-center gap-2.5 pl-1">
+            <h2 className="text-base font-bold text-zinc-800 m-0 tracking-tight">Account Actions</h2>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 border border-zinc-200">
+              {accountActions.length}
+            </span>
+          </div>
+          {accountGroups.map(group => (
+            <ActionGroup
+              key={'account-' + group.label}
+              label={group.label}
+              actions={group.actions}
+              onToggleStatus={toggleStatus}
+              onToggleBlocked={setBlocked}
+              onUpdatePriority={updatePriority}
+              expandedNote={expandedNote}
+              onToggleNote={id => setExpandedNote(expandedNote === id ? null : id)}
+            />
+          ))}
+        </motion.div>
+      )}
+
+      {/* Empty state */}
+      {generalGroups.length === 0 && accountGroups.length === 0 && (
+        <div className="text-center py-16 text-zinc-400 text-sm">No actions match your filters.</div>
+      )}
     </motion.div>
   );
 }

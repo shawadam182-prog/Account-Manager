@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, X } from 'lucide-react';
 import { addAction } from '../../services/actionsService';
+import { getAccounts } from '../../services/accountsService';
 import type { ActionPriority, ActionCategory } from '../../lib/types';
 
 const CATEGORY_OPTIONS: ActionCategory[] = ['Follow-up', 'Data request', 'Internal task', 'Client deliverable', 'Renewal', 'Other'];
@@ -24,6 +25,16 @@ export default function AddActionForm({
   const [notes, setNotes] = useState('');
   const [showExtra, setShowExtra] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [accountOptions, setAccountOptions] = useState<{ id: string; name: string }[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (accountId === null) {
+      getAccounts().then((data) =>
+        setAccountOptions(data.map((a) => ({ id: a.id, name: a.company_name })))
+      );
+    }
+  }, [accountId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +42,7 @@ export default function AddActionForm({
     setSaving(true);
     try {
       await addAction({
-        account_id: accountId!,
+        account_id: accountId ?? selectedAccountId ?? null,
         meeting_id: meetingId || null,
         description: description.trim(),
         owner,
@@ -70,6 +81,23 @@ export default function AddActionForm({
           autoFocus
           className="w-full px-3.5 py-2.5 border border-zinc-200 rounded-xl text-sm font-medium text-zinc-900 outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all bg-white placeholder:text-zinc-400"
         />
+
+        {/* Optional account selector (only when creating from ActionsHub) */}
+        {accountId === null && (
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Link to Account (optional)</label>
+            <select
+              value={selectedAccountId ?? ''}
+              onChange={(e) => setSelectedAccountId(e.target.value || null)}
+              className="px-3 py-2 border border-zinc-200 rounded-xl text-sm font-medium text-zinc-700 outline-none bg-white cursor-pointer focus:ring-2 focus:ring-brand-primary/20 transition-all w-fit max-w-xs"
+            >
+              <option value="">General (no account)</option>
+              {accountOptions.map((a) => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Main row: owner, priority, due date */}
         <div className="flex items-center gap-2.5 flex-wrap">

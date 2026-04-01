@@ -47,7 +47,7 @@ export async function updateAction(id: string, updates: Partial<Action>): Promis
 }
 
 export async function addAction(action: {
-  account_id: string;
+  account_id: string | null;
   meeting_id?: string | null;
   description: string;
   owner: string;
