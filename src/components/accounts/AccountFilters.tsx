@@ -4,9 +4,9 @@ import { X } from 'lucide-react';
 
 const RAG_OPTIONS = ['Green', 'Amber', 'Red', 'Not set'];
 const REPORT_OPTIONS = ['In progress', 'Overdue', 'Report Delivered', 'Data Submitted', 'Not set'];
-const MEMBERSHIP_OPTIONS = ['Business Certification', 'Advanced', 'Net Zero Committed', 'Multiple Tiers'];
+const MEMBERSHIP_OPTIONS = ['Business Certification', 'Advanced', 'Net Zero Committed', 'Multiple Tiers', 'Achiever'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const ADDON_OPTIONS = ['Social Value', 'PPN', 'ESOS'];
+const ADDON_OPTIONS = ['Social Value', 'PPN', 'ESOS', 'Data Management'];
 
 function MultiSelect({ label, param, options }: { label: string; param: string; options: string[] }) {
   const [searchParams, setSearchParams] = useSearchParams();

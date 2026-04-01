@@ -1,9 +1,11 @@
+import { Lock } from 'lucide-react';
 import { computeHealthScore, healthConfig } from '../../utils/healthScore';
 import type { Account } from '../../lib/types';
 
 export default function HealthBadge({ account }: { account: Account }) {
   const score = computeHealthScore(account);
   const config = healthConfig[score];
+  const isOverridden = !!account.health_override;
   return (
     <span
       style={{
@@ -29,6 +31,7 @@ export default function HealthBadge({ account }: { account: Account }) {
         }}
       />
       {config.label}
+      {isOverridden && <Lock size={10} style={{ opacity: 0.6 }} />}
     </span>
   );
 }

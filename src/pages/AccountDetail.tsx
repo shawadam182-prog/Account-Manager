@@ -20,6 +20,7 @@ const MEMBERSHIP_OPTIONS = [
   { value: 'Advanced', label: 'Advanced' },
   { value: 'Net Zero Committed', label: 'Net Zero Committed' },
   { value: 'Multiple Tiers', label: 'Multiple Tiers' },
+  { value: 'Achiever', label: 'Achiever' },
 ];
 
 const REPORT_STATUS_OPTIONS = [
@@ -39,6 +40,15 @@ const ADDON_OPTIONS = [
   { value: 'Social Value', label: 'Social Value' },
   { value: 'PPN', label: 'PPN' },
   { value: 'ESOS', label: 'ESOS' },
+  { value: 'Data Management', label: 'Data Management' },
+];
+
+const HEALTH_OVERRIDE_OPTIONS = [
+  { value: '', label: 'Auto (computed)' },
+  { value: 'healthy', label: 'Healthy' },
+  { value: 'monitor', label: 'Monitor' },
+  { value: 'risk', label: 'At Risk' },
+  { value: 'critical', label: 'Critical' },
 ];
 
 const MONTH_OPTIONS = [
@@ -161,6 +171,14 @@ export default function AccountDetail() {
             </Field>
             <Field label="Add-Ons">
               <InlineEdit value={account.add_ons} variant="multiselect" options={ADDON_OPTIONS} onSave={(v) => handleUpdate('add_ons', v)} />
+            </Field>
+            <Field label="Health Override">
+              <InlineEdit
+                value={account.health_override || ''}
+                variant="select"
+                options={HEALTH_OVERRIDE_OPTIONS}
+                onSave={(v) => handleUpdate('health_override', v || null)}
+              />
             </Field>
           </SidebarSection>
 

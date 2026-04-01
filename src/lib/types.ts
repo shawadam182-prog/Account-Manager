@@ -6,7 +6,10 @@ export type MembershipLevel =
   | 'Business Certification'
   | 'Advanced'
   | 'Net Zero Committed'
-  | 'Multiple Tiers';
+  | 'Multiple Tiers'
+  | 'Achiever';
+
+export type HealthOverride = 'healthy' | 'monitor' | 'risk' | 'critical';
 
 export type MeetingType =
   | 'Check-in'
@@ -46,6 +49,8 @@ export interface Account {
   days_since_contact?: number | null;
   open_actions_count?: number;
   overdue_actions_count?: number;
+  parent_account_id?: string | null;
+  health_override?: HealthOverride | null;
 }
 
 export interface Meeting {

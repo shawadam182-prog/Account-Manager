@@ -3,6 +3,9 @@ import type { Account } from '../lib/types';
 export type HealthScore = 'healthy' | 'monitor' | 'risk' | 'critical';
 
 export function computeHealthScore(account: Account): HealthScore {
+  // Manual override takes priority
+  if (account.health_override) return account.health_override as HealthScore;
+
   let score = 0;
 
   // RAG status

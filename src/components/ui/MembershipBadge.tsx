@@ -5,6 +5,7 @@ const styles: Record<string, { bg: string; text: string; abbr: string }> = {
   'Advanced':               { bg: '#DBEAFE', text: '#1D4ED8', abbr: 'ADV' },
   'Net Zero Committed':     { bg: '#DCFCE7', text: '#15803D', abbr: 'NZC' },
   'Multiple Tiers':         { bg: '#EDE9FE', text: '#7C3AED', abbr: 'MT' },
+  'Achiever':               { bg: '#FEF3C7', text: '#92400E', abbr: 'ACH' },
 };
 
 export default function MembershipBadge({ level, compact = false }: { level: MembershipLevel | null; compact?: boolean }) {
