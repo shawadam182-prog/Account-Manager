@@ -116,6 +116,11 @@ function ActionRow({ action, isLast, onToggle, onToggleBlocked, onChangePriority
         </span>
         {/* Meta */}
         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+          {action.action_type && (
+            <span className="text-[9px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">
+              {action.action_type}
+            </span>
+          )}
           {action.category && (
             <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded">
               {action.category}

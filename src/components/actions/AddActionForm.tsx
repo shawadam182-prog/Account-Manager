@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { Plus, X } from 'lucide-react';
 import { addAction } from '../../services/actionsService';
 import { getAccounts } from '../../services/accountsService';
-import type { ActionPriority, ActionCategory } from '../../lib/types';
+import type { ActionPriority, ActionCategory, ActionType } from '../../lib/types';
 
 const CATEGORY_OPTIONS: ActionCategory[] = ['Follow-up', 'Data request', 'Internal task', 'Client deliverable', 'Renewal', 'Other'];
+const ACTION_TYPE_OPTIONS: ActionType[] = ['Phone Call', 'Email', 'Task', 'Follow-up'];
 
 export default function AddActionForm({
   accountId,
@@ -22,6 +23,7 @@ export default function AddActionForm({
   const [dueDate, setDueDate] = useState('');
   const [priority, setPriority] = useState<ActionPriority>('Medium');
   const [category, setCategory] = useState<ActionCategory | ''>('');
+  const [actionType, setActionType] = useState<ActionType | ''>('');
   const [notes, setNotes] = useState('');
   const [showExtra, setShowExtra] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -49,6 +51,7 @@ export default function AddActionForm({
         due_date: dueDate || null,
         priority,
         category: category || null,
+        action_type: actionType || null,
         notes: notes.trim() || null,
       });
       onSaved();
@@ -99,8 +102,17 @@ export default function AddActionForm({
           </div>
         )}
 
-        {/* Main row: owner, priority, due date */}
+        {/* Main row: type, owner, priority, due date */}
         <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Type</label>
+            <select value={actionType} onChange={e => setActionType(e.target.value as ActionType)}
+              className="px-3 py-2 border border-zinc-200 rounded-xl text-sm font-medium text-zinc-700 outline-none bg-white cursor-pointer focus:ring-2 focus:ring-brand-primary/20 transition-all">
+              <option value="">None</option>
+              {ACTION_TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+
           <div className="flex flex-col gap-1">
             <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Owner</label>
             <select value={owner} onChange={e => setOwner(e.target.value)}

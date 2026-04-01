@@ -491,6 +491,11 @@ function ActionCard({ action, isLast, onToggleStatus, onToggleBlocked, onUpdateP
 
           {/* Meta row */}
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            {action.action_type && (
+              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">
+                {action.action_type}
+              </span>
+            )}
             {action.account && (
               <Link to={`/accounts/${action.account.id}`} className="text-[11px] font-semibold text-brand-primary hover:underline">
                 {action.account.company_name}

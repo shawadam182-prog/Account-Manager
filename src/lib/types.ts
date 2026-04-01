@@ -22,6 +22,7 @@ export type MeetingType =
 export type ActionStatus = 'Open' | 'Done' | 'Blocked';
 export type ActionPriority = 'High' | 'Medium' | 'Low';
 export type ActionCategory = 'Follow-up' | 'Data request' | 'Internal task' | 'Client deliverable' | 'Renewal' | 'Other';
+export type ActionType = 'Phone Call' | 'Email' | 'Task' | 'Follow-up';
 
 export interface Account {
   id: string;
@@ -76,6 +77,7 @@ export interface Action {
   status: ActionStatus;
   priority: ActionPriority;
   category: ActionCategory | null;
+  action_type: ActionType | null;
   notes: string | null;
   completed_at: string | null;
   created_at: string;

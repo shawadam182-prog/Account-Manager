@@ -55,6 +55,7 @@ export async function addAction(action: {
   status?: string;
   priority?: string;
   category?: string | null;
+  action_type?: string | null;
   notes?: string | null;
 }): Promise<Action> {
   const { data, error } = await supabase
