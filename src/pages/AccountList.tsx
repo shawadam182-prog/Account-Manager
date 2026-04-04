@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
-import { Download } from 'lucide-react';
+import { Download, Plus } from 'lucide-react';
 import { getAccounts } from '../services/accountsService';
+import AddAccountForm from '../components/accounts/AddAccountForm';
 import type { Account } from '../lib/types';
 import AccountFilters from '../components/accounts/AccountFilters';
 import AccountTable from '../components/accounts/AccountTable';
@@ -11,11 +12,16 @@ import { exportAccountsCsv } from '../utils/csvExport';
 export default function AccountList() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAddAccount, setShowAddAccount] = useState(false);
   const [searchParams] = useSearchParams();
+
+  const loadAccounts = () => {
+    getAccounts().then(setAccounts).finally(() => setLoading(false));
+  };
 
   useEffect(() => {
     document.title = 'Accounts — Planet Mark AM';
-    getAccounts().then(setAccounts).finally(() => setLoading(false));
+    loadAccounts();
   }, []);
 
   const search = (searchParams.get('search') || '').toLowerCase();
@@ -70,13 +76,29 @@ export default function AccountList() {
             Your portfolio — click any column to sort, click RAG dots to update inline
           </p>
         </div>
-        <button
-          onClick={() => exportAccountsCsv(filtered)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-zinc-700 bg-white/50 backdrop-blur-sm border border-zinc-200/80 rounded-xl hover:bg-white hover:shadow-md transition-all duration-300 mt-1 cursor-pointer"
-        >
-          <Download size={16} className="text-zinc-500" /> Export CSV
-        </button>
+        <div className="flex items-center gap-2 mt-1">
+          <button
+            onClick={() => setShowAddAccount(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white border-none rounded-xl hover:opacity-90 transition-all duration-300 cursor-pointer"
+            style={{ backgroundColor: '#16a34a' }}
+          >
+            <Plus size={16} /> Add Account
+          </button>
+          <button
+            onClick={() => exportAccountsCsv(filtered)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-zinc-700 bg-white/50 backdrop-blur-sm border border-zinc-200/80 rounded-xl hover:bg-white hover:shadow-md transition-all duration-300 cursor-pointer"
+          >
+            <Download size={16} className="text-zinc-500" /> Export CSV
+          </button>
+        </div>
       </div>
+
+      {showAddAccount && (
+        <AddAccountForm
+          onSaved={() => { setShowAddAccount(false); loadAccounts(); }}
+          onCancel={() => setShowAddAccount(false)}
+        />
+      )}
       <AccountFilters totalCount={accounts.length} filteredCount={filtered.length} />
       <AccountTable accounts={filtered} />
     </motion.div>

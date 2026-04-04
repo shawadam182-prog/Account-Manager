@@ -20,6 +20,25 @@ export async function getAccount(id: string): Promise<Account> {
   return data;
 }
 
+export async function addAccount(account: {
+  company_name: string;
+  membership_level?: string | null;
+  main_poc?: string | null;
+  renewal_month?: string | null;
+  reporting_period?: string | null;
+  industry?: string | null;
+  rag_status?: string | null;
+  parent_account_id?: string | null;
+}): Promise<Account> {
+  const { data, error } = await supabase
+    .from('accounts')
+    .insert(account)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function updateAccount(id: string, updates: Partial<Account>): Promise<Account> {
   const { data, error } = await supabase
     .from('accounts')
