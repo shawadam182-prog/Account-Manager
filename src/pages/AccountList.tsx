@@ -7,12 +7,16 @@ import AddAccountForm from '../components/accounts/AddAccountForm';
 import type { Account } from '../lib/types';
 import AccountFilters from '../components/accounts/AccountFilters';
 import AccountTable from '../components/accounts/AccountTable';
+import OutreachView from '../components/accounts/OutreachView';
 import { exportAccountsCsv } from '../utils/csvExport';
+
+type ViewMode = 'all' | 'outreach';
 
 export default function AccountList() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddAccount, setShowAddAccount] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [searchParams] = useSearchParams();
 
   const loadAccounts = () => {
@@ -99,8 +103,43 @@ export default function AccountList() {
           onCancel={() => setShowAddAccount(false)}
         />
       )}
-      <AccountFilters totalCount={accounts.length} filteredCount={filtered.length} />
-      <AccountTable accounts={filtered} />
+
+      {/* Tab toggle */}
+      <div className="flex items-center gap-1 border-b border-zinc-200/80">
+        <button
+          type="button"
+          onClick={() => setViewMode('all')}
+          className={`px-4 py-2 text-sm font-semibold border-none bg-transparent cursor-pointer transition-all relative ${
+            viewMode === 'all' ? 'text-zinc-900' : 'text-zinc-400 hover:text-zinc-600'
+          }`}
+        >
+          All Accounts
+          {viewMode === 'all' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: '#16a34a' }} />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewMode('outreach')}
+          className={`px-4 py-2 text-sm font-semibold border-none bg-transparent cursor-pointer transition-all relative ${
+            viewMode === 'outreach' ? 'text-zinc-900' : 'text-zinc-400 hover:text-zinc-600'
+          }`}
+        >
+          Outreach
+          {viewMode === 'outreach' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: '#16a34a' }} />
+          )}
+        </button>
+      </div>
+
+      {viewMode === 'all' ? (
+        <>
+          <AccountFilters totalCount={accounts.length} filteredCount={filtered.length} />
+          <AccountTable accounts={filtered} />
+        </>
+      ) : (
+        <OutreachView accounts={filtered} />
+      )}
     </motion.div>
   );
 }

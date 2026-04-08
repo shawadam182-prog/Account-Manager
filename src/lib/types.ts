@@ -67,6 +67,20 @@ export interface Meeting {
   account?: Pick<Account, 'id' | 'company_name'> | null;
 }
 
+export type ContactMethod = 'Phone Call' | 'Email' | 'LinkedIn' | 'In Person' | 'Other';
+export type ContactOutcome = 'No Answer' | 'Voicemail' | 'Bounced' | 'Replied' | 'Connected' | 'Other';
+
+export interface ContactAttempt {
+  id: string;
+  account_id: string;
+  attempt_date: string;
+  method: ContactMethod;
+  outcome: ContactOutcome | null;
+  notes: string | null;
+  created_at: string;
+  account?: Pick<Account, 'id' | 'company_name'> | null;
+}
+
 export interface Action {
   id: string;
   meeting_id: string | null;
