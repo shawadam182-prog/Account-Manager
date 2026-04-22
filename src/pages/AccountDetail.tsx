@@ -14,6 +14,7 @@ import ActionsList from '../components/actions/ActionsList';
 import AddActionForm from '../components/actions/AddActionForm';
 import TranscriptUpload from '../components/meetings/TranscriptUpload';
 import EditableAccountSummary from '../components/accounts/EditableAccountSummary';
+import AccountOutreachSection from '../components/accounts/AccountOutreachSection';
 
 const MEMBERSHIP_OPTIONS = [
   { value: 'Business Certification', label: 'Business Certification' },
@@ -59,7 +60,7 @@ export default function AccountDetail() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'meetings' | 'actions'>('meetings');
+  const [activeTab, setActiveTab] = useState<'meetings' | 'actions' | 'outreach'>('meetings');
   const [showAddMeeting, setShowAddMeeting] = useState(false);
   const [showAddAction, setShowAddAction] = useState(false);
   const [showTranscriptUpload, setShowTranscriptUpload] = useState(false);
@@ -280,6 +281,11 @@ export default function AccountDetail() {
               onClick={() => setActiveTab('actions')}
               label={`Actions (${actions.length})`}
             />
+            <TabButton
+              active={activeTab === 'outreach'}
+              onClick={() => setActiveTab('outreach')}
+              label="Outreach"
+            />
           </div>
 
           {activeTab === 'meetings' && (
@@ -354,6 +360,10 @@ export default function AccountDetail() {
 
               <ActionsList actions={actions} onRefresh={loadData} />
             </div>
+          )}
+
+          {activeTab === 'outreach' && (
+            <AccountOutreachSection accountId={account.id} accountName={account.company_name} />
           )}
         </div>
       </div>
