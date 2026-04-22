@@ -34,8 +34,10 @@ export default function AccountList() {
   const membershipFilter = searchParams.get('membership')?.split(',').filter(Boolean) || [];
   const renewalFilter = searchParams.get('renewal')?.split(',').filter(Boolean) || [];
   const addonsFilter = searchParams.get('addons')?.split(',').filter(Boolean) || [];
+  const openOppsOnly = searchParams.get('opps') === '1';
 
   const filtered = accounts.filter((a) => {
+    if (openOppsOnly && !a.has_open_opportunity) return false;
     if (search) {
       const match =
         a.company_name.toLowerCase().includes(search) ||

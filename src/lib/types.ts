@@ -43,6 +43,10 @@ export interface Account {
   turnover: string | null;
   industry: string | null;
   crm_id: string | null;
+  crm_url: string | null;
+  has_open_opportunity: boolean;
+  account_summary: string | null;
+  summary_updated_at: string | null;
   ai_summary: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;

@@ -13,7 +13,7 @@ import AddMeetingForm from '../components/meetings/AddMeetingForm';
 import ActionsList from '../components/actions/ActionsList';
 import AddActionForm from '../components/actions/AddActionForm';
 import TranscriptUpload from '../components/meetings/TranscriptUpload';
-import AccountSummary from '../components/accounts/AccountSummary';
+import EditableAccountSummary from '../components/accounts/EditableAccountSummary';
 
 const MEMBERSHIP_OPTIONS = [
   { value: 'Business Certification', label: 'Business Certification' },
@@ -198,12 +198,19 @@ export default function AccountDetail() {
             <Field label="Current ARR">
               <InlineEdit value={account.current_arr} variant="number" prefix="£" onSave={(v) => handleUpdate('current_arr', v)} />
             </Field>
-            <Field label="Opportunity Value">
-              <InlineEdit value={account.opportunity_value} variant="number" prefix="£" onSave={(v) => handleUpdate('opportunity_value', v)} />
-            </Field>
             <Field label="Open Opportunity">
-              <InlineEdit value={account.open_opportunity} onSave={(v) => handleUpdate('open_opportunity', v)} />
+              <InlineEdit value={account.has_open_opportunity} variant="toggle" onSave={(v) => handleUpdate('has_open_opportunity', v)} />
             </Field>
+            {account.has_open_opportunity && (
+              <>
+                <Field label="Deal / Opportunity Name">
+                  <InlineEdit value={account.open_opportunity} onSave={(v) => handleUpdate('open_opportunity', v)} placeholder="Add deal name..." />
+                </Field>
+                <Field label="Opportunity Value">
+                  <InlineEdit value={account.opportunity_value} variant="number" prefix="£" onSave={(v) => handleUpdate('opportunity_value', v)} />
+                </Field>
+              </>
+            )}
           </SidebarSection>
 
           {/* Additional Info */}
@@ -217,6 +224,29 @@ export default function AccountDetail() {
             <Field label="Relevant Info">
               <InlineEdit value={account.relevant_info} variant="textarea" onSave={(v) => handleUpdate('relevant_info', v)} />
             </Field>
+            <Field label="CRM Link (Dynamics URL)">
+              {account.crm_url ? (
+                <div className="flex items-center gap-2">
+                  <a
+                    href={account.crm_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-semibold text-brand-primary hover:text-brand-primary-hover underline truncate max-w-[200px]"
+                  >
+                    Open in Dynamics →
+                  </a>
+                  <button
+                    onClick={() => handleUpdate('crm_url', null)}
+                    title="Clear CRM URL"
+                    className="text-zinc-400 hover:text-red-500 bg-transparent border-none cursor-pointer text-xs"
+                  >
+                    Clear
+                  </button>
+                </div>
+              ) : (
+                <InlineEdit value={account.crm_url} onSave={(v) => handleUpdate('crm_url', v)} placeholder="Paste Dynamics URL..." />
+              )}
+            </Field>
             <Field label="CRM ID">
               <InlineEdit value={account.crm_id} locked placeholder="Not linked" onSave={() => Promise.resolve()} />
             </Field>
@@ -225,13 +255,16 @@ export default function AccountDetail() {
 
         {/* Right main area */}
         <div className="min-w-0 flex flex-col gap-6">
-          {/* AI Summary */}
-          <AccountSummary
+          {/* Account Summary */}
+          <EditableAccountSummary
             account={account}
             meetings={meetings}
             actions={actions}
-            onSave={async (summary) => {
-              await handleUpdate('ai_summary', summary);
+            onSave={async (summary, updatedAt) => {
+              if (!account) return;
+              const patch = { account_summary: summary, summary_updated_at: updatedAt } as Partial<Account>;
+              setAccount({ ...account, ...patch } as Account);
+              await updateAccount(account.id, patch);
             }}
           />
 

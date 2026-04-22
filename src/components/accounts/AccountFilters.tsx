@@ -85,8 +85,16 @@ export default function AccountFilters({ totalCount, filteredCount }: { totalCou
   const membershipFilter = searchParams.get('membership')?.split(',').filter(Boolean) || [];
   const renewalFilter = searchParams.get('renewal')?.split(',').filter(Boolean) || [];
   const addonsFilter = searchParams.get('addons')?.split(',').filter(Boolean) || [];
+  const openOppsActive = searchParams.get('opps') === '1';
 
   const hasFilters = Array.from(searchParams.keys()).length > 0;
+
+  const toggleOpenOpps = () => {
+    const params = new URLSearchParams(searchParams);
+    if (openOppsActive) params.delete('opps');
+    else params.set('opps', '1');
+    setSearchParams(params);
+  };
 
   const removeFromParam = (param: string, val: string) => {
     const current = searchParams.get(param)?.split(',').filter(Boolean) || [];
@@ -119,6 +127,12 @@ export default function AccountFilters({ totalCount, filteredCount }: { totalCou
         <MultiSelect label="Membership" param="membership" options={MEMBERSHIP_OPTIONS} />
         <MultiSelect label="Renewal Month" param="renewal" options={MONTHS} />
         <MultiSelect label="Add-Ons" param="addons" options={ADDON_OPTIONS} />
+        <button
+          onClick={toggleOpenOpps}
+          className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors cursor-pointer ${openOppsActive ? 'border-green-300 bg-green-50 text-green-700' : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'}`}
+        >
+          Open Opps
+        </button>
         {hasFilters && (
           <button
             onClick={() => setSearchParams({})}
@@ -151,6 +165,9 @@ export default function AccountFilters({ totalCount, filteredCount }: { totalCou
           {addonsFilter.map((v) => (
             <ActiveChip key={v} label={v} onRemove={() => removeFromParam('addons', v)} />
           ))}
+          {openOppsActive && (
+            <ActiveChip label="Open Opps" onRemove={toggleOpenOpps} />
+          )}
         </div>
       )}
 
