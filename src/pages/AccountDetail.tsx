@@ -43,14 +43,6 @@ const ADDON_OPTIONS = [
   { value: 'Data Management', label: 'Data Management' },
 ];
 
-const HEALTH_OVERRIDE_OPTIONS = [
-  { value: '', label: 'Auto (computed)' },
-  { value: 'healthy', label: 'Healthy' },
-  { value: 'monitor', label: 'Monitor' },
-  { value: 'risk', label: 'At Risk' },
-  { value: 'critical', label: 'Critical' },
-];
-
 const MONTH_OPTIONS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -171,14 +163,6 @@ export default function AccountDetail() {
             </Field>
             <Field label="Add-Ons">
               <InlineEdit value={account.add_ons} variant="multiselect" options={ADDON_OPTIONS} onSave={(v) => handleUpdate('add_ons', v)} />
-            </Field>
-            <Field label="Health Override">
-              <InlineEdit
-                value={account.health_override || ''}
-                variant="select"
-                options={HEALTH_OVERRIDE_OPTIONS}
-                onSave={(v) => handleUpdate('health_override', v || null)}
-              />
             </Field>
           </SidebarSection>
 

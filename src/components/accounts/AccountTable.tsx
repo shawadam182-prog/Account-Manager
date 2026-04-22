@@ -6,24 +6,16 @@ import RAGBadge from '../ui/RAGBadge';
 import StatusBadge from '../ui/StatusBadge';
 import MembershipBadge from '../ui/MembershipBadge';
 import LastContactBadge from '../ui/LastContactBadge';
-import HealthBadge from '../ui/HealthBadge';
-import { computeHealthScore, healthConfig } from '../../utils/healthScore';
-import type { HealthScore } from '../../utils/healthScore';
 import { updateAccount } from '../../services/accountsService';
 
-type SortKey = 'company_name' | 'health' | 'report_status' | 'rag_status' | 'last_meeting_date' | 'renewal_month';
+type SortKey = 'company_name' | 'report_status' | 'rag_status' | 'last_meeting_date' | 'renewal_month';
 type SortDir = 'asc' | 'desc';
-
-const HEALTH_ORDER = { critical: 0, risk: 1, monitor: 2, healthy: 3 };
 
 function sortAccounts(accounts: Account[], key: SortKey, dir: SortDir): Account[] {
   return [...accounts].sort((a, b) => {
     let av: string | number | null = null;
     let bv: string | number | null = null;
-    if (key === 'health') {
-      av = HEALTH_ORDER[computeHealthScore(a)];
-      bv = HEALTH_ORDER[computeHealthScore(b)];
-    } else if (key === 'last_meeting_date') {
+    if (key === 'last_meeting_date') {
       av = a.last_meeting_date ? new Date(a.last_meeting_date).getTime() : 0;
       bv = b.last_meeting_date ? new Date(b.last_meeting_date).getTime() : 0;
     } else {
@@ -149,47 +141,6 @@ function ReportPopover({ account, onUpdated }: { account: Account; onUpdated: (v
 }
 
 /* ------------------------------------------------------------------ */
-/*  Health Override Popover                                             */
-/* ------------------------------------------------------------------ */
-
-function HealthPopover({ account, onUpdated }: { account: Account; onUpdated: (val: HealthScore | null) => void }) {
-  const options: { value: HealthScore; label: string }[] = [
-    { value: 'healthy', label: 'Healthy' },
-    { value: 'monitor', label: 'Monitor' },
-    { value: 'risk', label: 'At Risk' },
-    { value: 'critical', label: 'Critical' },
-  ];
-
-  return (
-    <TablePopover trigger={<HealthBadge account={account} />}>
-      {(close) => (
-        <>
-          {options.map((opt) => {
-            const cfg = healthConfig[opt.value];
-            return (
-              <button
-                key={opt.value}
-                onClick={() => { close(); onUpdated(opt.value); updateAccount(account.id, { health_override: opt.value } as Partial<Account>); }}
-                className="flex items-center gap-3 w-full px-3 py-2 text-[13px] font-bold text-zinc-700 bg-transparent border-none cursor-pointer rounded-lg text-left hover:bg-zinc-50 transition-colors"
-              >
-                <span className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ background: cfg.dot }} />
-                {opt.label}
-              </button>
-            );
-          })}
-          <button
-            onClick={() => { close(); onUpdated(null); updateAccount(account.id, { health_override: null } as Partial<Account>); }}
-            className="flex items-center gap-3 w-full px-3 py-2 text-xs font-semibold text-zinc-400 bg-transparent border-none cursor-pointer rounded-lg text-left hover:bg-zinc-50 transition-colors mt-0.5"
-          >
-            Auto (computed)
-          </button>
-        </>
-      )}
-    </TablePopover>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /*  Membership Popover                                                 */
 /* ------------------------------------------------------------------ */
 
@@ -279,7 +230,7 @@ function AddOnsPopover({ account, onUpdated }: { account: Account; onUpdated: (v
 /* ------------------------------------------------------------------ */
 
 export default function AccountTable({ accounts }: { accounts: Account[] }) {
-  const [sortKey, setSortKey] = useState<SortKey>('health');
+  const [sortKey, setSortKey] = useState<SortKey>('company_name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [localAccounts, setLocalAccounts] = useState<Account[]>(accounts);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -323,17 +274,35 @@ export default function AccountTable({ accounts }: { accounts: Account[] }) {
   const topLevel = localAccounts.filter(a => !childIds.has(a.id));
   const sorted = sortAccounts(topLevel, sortKey, sortDir);
 
+  const showAlphaHeaders = sortKey === 'company_name' && sortDir === 'asc';
+
+  const letterOf = (name: string) => {
+    const ch = (name || '').trim().charAt(0).toUpperCase();
+    return /[A-Z]/.test(ch) ? ch : '#';
+  };
+
   // Build flattened display list
-  const displayRows: { account: Account; isChild: boolean; isParent: boolean; childCount: number }[] = [];
+  type Row =
+    | { kind: 'section'; letter: string }
+    | { kind: 'account'; account: Account; isChild: boolean; isParent: boolean; childCount: number };
+  const displayRows: Row[] = [];
+  let currentLetter = '';
   for (const a of sorted) {
+    if (showAlphaHeaders) {
+      const letter = letterOf(a.company_name);
+      if (letter !== currentLetter) {
+        displayRows.push({ kind: 'section', letter });
+        currentLetter = letter;
+      }
+    }
     const isParent = parentIds.has(a.id);
     const children = childMap.get(a.id) || [];
-    displayRows.push({ account: a, isChild: false, isParent, childCount: children.length });
+    displayRows.push({ kind: 'account', account: a, isChild: false, isParent, childCount: children.length });
 
     if (isParent && expandedGroups.has(a.id)) {
       const sortedChildren = sortAccounts(children, 'company_name', 'asc');
       for (const child of sortedChildren) {
-        displayRows.push({ account: child, isChild: true, isParent: false, childCount: 0 });
+        displayRows.push({ kind: 'account', account: child, isChild: true, isParent: false, childCount: 0 });
       }
     }
   }
@@ -360,12 +329,8 @@ export default function AccountTable({ accounts }: { accounts: Account[] }) {
       <table className="w-full border-collapse">
         <thead>
           <tr>
-            <th className="w-[3px] p-0 cursor-default bg-white/50 border-b border-zinc-200/80" />
             <th className={thClassName} onClick={() => handleSort('company_name')}>
               <span className="inline-flex items-center gap-1.5">Company <SortIcon col="company_name" /></span>
-            </th>
-            <th className={thClassName} onClick={() => handleSort('health')}>
-              <span className="inline-flex items-center gap-1.5">Health <SortIcon col="health" /></span>
             </th>
             <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-zinc-500 cursor-default select-none whitespace-nowrap bg-white/50 backdrop-blur-sm border-b border-zinc-200/80 text-left">Membership</th>
             <th className={thClassName} onClick={() => handleSort('report_status')}>
@@ -384,8 +349,17 @@ export default function AccountTable({ accounts }: { accounts: Account[] }) {
           </tr>
         </thead>
         <tbody>
-          {displayRows.map(({ account: a, isChild, isParent, childCount }) => {
-            const health = computeHealthScore(a);
+          {displayRows.map((row, idx) => {
+            if (row.kind === 'section') {
+              return (
+                <tr key={`section-${row.letter}-${idx}`} className="bg-zinc-50/60">
+                  <td colSpan={7} className="px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest text-zinc-500 border-b border-zinc-200/60">
+                    {row.letter}
+                  </td>
+                </tr>
+              );
+            }
+            const { account: a, isChild, isParent, childCount } = row;
             const isShell = !a.membership_level && !a.rag_status && !a.report_status;
             const hasOverdue = (a.overdue_actions_count ?? 0) > 0;
             const isExpanded = expandedGroups.has(a.id);
@@ -395,8 +369,6 @@ export default function AccountTable({ accounts }: { accounts: Account[] }) {
                 key={a.id}
                 className={`border-b border-zinc-200/50 transition-colors duration-200 bg-transparent hover:bg-zinc-50/60 ${isShell ? 'opacity-60' : 'opacity-100'} ${isChild ? 'bg-zinc-50/30' : ''} group`}
               >
-                <td className="w-[3px] p-0 transition-colors" style={{ background: isShell ? '#D1C9BC' : healthConfig[health].border }} />
-
                 <td className="px-4 py-3.5 align-middle">
                   <div className="flex items-center gap-1.5" style={isChild ? { paddingLeft: '24px' } : undefined}>
                     {isParent && (
@@ -435,13 +407,6 @@ export default function AccountTable({ accounts }: { accounts: Account[] }) {
                       )}
                     </div>
                   </div>
-                </td>
-
-                <td className="px-4 py-3.5 align-middle">
-                  <HealthPopover
-                    account={a}
-                    onUpdated={(val) => updateLocal(a.id, { health_override: val })}
-                  />
                 </td>
 
                 <td className="px-4 py-3.5 align-middle">

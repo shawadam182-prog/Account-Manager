@@ -43,3 +43,11 @@ export async function addMeeting(meeting: Omit<Meeting, 'id' | 'created_at' | 'a
   if (error) throw error;
   return data;
 }
+
+export async function deleteMeeting(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('meetings')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
+}

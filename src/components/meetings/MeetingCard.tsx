@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, ChevronRight, Pencil, Check, X, Plus, Sparkles, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pencil, Check, X, Plus, Sparkles, Loader2, Trash2 } from 'lucide-react';
 import type { Meeting, Action } from '../../lib/types';
-import { updateMeeting } from '../../services/meetingsService';
+import { updateMeeting, deleteMeeting } from '../../services/meetingsService';
 import { updateActionStatus, addAction } from '../../services/actionsService';
 import { callAI } from '../../services/aiService';
 
@@ -44,7 +44,19 @@ export default function MeetingCard({
   const [actions, setActions] = useState<Action[]>(meeting.actions || []);
   const [extracting, setExtracting] = useState(false);
   const [suggested, setSuggested] = useState<SuggestedAction[]>([]);
+  const [deleting, setDeleting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleDelete = async () => {
+    if (!confirm('Delete this meeting? This cannot be undone. Any linked actions will also be deleted.')) return;
+    setDeleting(true);
+    try {
+      await deleteMeeting(meeting.id);
+      onRefresh?.();
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     if (editingNotes && textareaRef.current) {
@@ -182,6 +194,29 @@ export default function MeetingCard({
             {meeting.attendees && (
               <span style={{ fontSize: '12px', color: '#9CA3AF' }}>with {meeting.attendees}</span>
             )}
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              title="Delete meeting"
+              style={{
+                marginLeft: 'auto',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 8px',
+                fontSize: '11px',
+                color: '#9CA3AF',
+                background: 'none',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: deleting ? 'not-allowed' : 'pointer',
+                opacity: deleting ? 0.5 : 1,
+              }}
+              onMouseEnter={(e) => { if (!deleting) { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.backgroundColor = '#FEF2F2'; } }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = '#9CA3AF'; e.currentTarget.style.backgroundColor = 'transparent'; }}
+            >
+              <Trash2 size={12} /> {deleting ? 'Deleting...' : 'Delete'}
+            </button>
           </div>
 
           {/* Collapsed preview */}

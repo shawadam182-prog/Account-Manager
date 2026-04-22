@@ -10,9 +10,7 @@ import { getAccounts } from '../services/accountsService';
 import { getRecentMeetings } from '../services/meetingsService';
 import { getAllOpenActions } from '../services/actionsService';
 import RAGBadge from '../components/ui/RAGBadge';
-import HealthBadge from '../components/ui/HealthBadge';
 import { SkeletonCard, SkeletonTable } from '../components/ui/Skeleton';
-import { computeHealthScore } from '../utils/healthScore';
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -182,10 +180,7 @@ export default function Dashboard() {
   const upcomingRenewals = accounts.filter(a => a.renewal_month && renewalMonths.includes(a.renewal_month));
 
   const attentionAccounts = accounts
-    .filter(a => {
-      const h = computeHealthScore(a);
-      return h === 'critical' || h === 'risk';
-    })
+    .filter(a => a.rag_status === 'Red' || a.rag_status === 'Amber')
     .slice(0, 6);
 
   // Priorities
@@ -405,7 +400,7 @@ export default function Dashboard() {
                     {a.main_poc && <p className="text-[11px] text-zinc-400 m-0 mt-0.5">{a.main_poc}</p>}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <HealthBadge account={a} />
+                    <RAGBadge status={a.rag_status} />
                   </div>
                 </Link>
               ))}
