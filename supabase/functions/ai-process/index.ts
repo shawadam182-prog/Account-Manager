@@ -1,5 +1,5 @@
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+const MODELS = ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash"];
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,22 +7,30 @@ const corsHeaders = {
 };
 
 async function callGemini(prompt: string): Promise<string> {
-  const response = await fetch(GEMINI_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.3, maxOutputTokens: 2000 },
-    }),
-  });
+  let lastErr = "";
+  for (const model of MODELS) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 2000 },
+      }),
+    });
 
-  if (!response.ok) {
+    if (response.ok) {
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    }
+
     const err = await response.text();
-    throw new Error(`Gemini API error: ${response.status} ${err}`);
+    lastErr = `${model}: ${response.status} ${err}`;
+    // Fall through to next model on 404 (model unavailable) or 429 (quota).
+    // Other errors (auth, bad request) are real — surface them immediately.
+    if (response.status !== 404 && response.status !== 429) break;
   }
-
-  const data = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  throw new Error(`Gemini API error: ${lastErr}`);
 }
 
 Deno.serve(async (req) => {
