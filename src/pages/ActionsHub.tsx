@@ -122,7 +122,7 @@ export default function ActionsHub() {
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [showCompleted, setShowCompleted] = useState(false);
   const [sortBy, setSortBy] = useState<SortKey>('priority');
-  const [groupBy, setGroupBy] = useState<GroupKey>('status');
+  const [groupBy, setGroupBy] = useState<GroupKey>('account');
   const [expandedNote, setExpandedNote] = useState<string | null>(null);
   const [showAddAction, setShowAddAction] = useState(false);
 
@@ -181,6 +181,22 @@ export default function ActionsHub() {
   const accountActions = sorted.filter(a => a.account_id !== null);
   const generalGroups = groupActions(generalActions, groupBy);
   const accountGroups = groupActions(accountActions, groupBy);
+
+  // Per-account grouping (used when groupBy === 'account')
+  const perAccountGroups: { accountId: string; accountName: string; actions: Action[] }[] = [];
+  if (groupBy === 'account') {
+    const byAccount = new Map<string, { name: string; actions: Action[] }>();
+    for (const a of accountActions) {
+      const id = a.account_id || 'unknown';
+      const name = a.account?.company_name || 'Unlinked';
+      if (!byAccount.has(id)) byAccount.set(id, { name, actions: [] });
+      byAccount.get(id)!.actions.push(a);
+    }
+    for (const [id, { name, actions }] of byAccount) {
+      perAccountGroups.push({ accountId: id, accountName: name, actions });
+    }
+    perAccountGroups.sort((a, b) => a.accountName.localeCompare(b.accountName));
+  }
 
   const openCount = actions.filter(a => a.status === 'Open').length;
   const blockedCount = actions.filter(a => a.status === 'Blocked').length;
@@ -353,31 +369,60 @@ export default function ActionsHub() {
       )}
 
       {/* Account Actions */}
-      {accountGroups.length > 0 && (
-        <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="flex flex-col gap-4">
-          <div className="flex items-center gap-2.5 pl-1">
-            <h2 className="text-base font-bold text-zinc-800 m-0 tracking-tight">Account Actions</h2>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 border border-zinc-200">
-              {accountActions.length}
-            </span>
-          </div>
-          {accountGroups.map(group => (
-            <ActionGroup
-              key={'account-' + group.label}
-              label={group.label}
-              actions={group.actions}
-              onToggleStatus={toggleStatus}
-              onToggleBlocked={setBlocked}
-              onUpdatePriority={updatePriority}
-              expandedNote={expandedNote}
-              onToggleNote={id => setExpandedNote(expandedNote === id ? null : id)}
-            />
-          ))}
-        </motion.div>
+      {groupBy === 'account' ? (
+        perAccountGroups.length > 0 && (
+          <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="flex flex-col gap-3">
+            <div className="flex items-center gap-2.5 pl-1">
+              <h2 className="text-base font-bold text-zinc-800 m-0 tracking-tight">Account Actions</h2>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 border border-zinc-200">
+                {accountActions.length}
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-50 text-zinc-400 border border-zinc-200">
+                {perAccountGroups.length} {perAccountGroups.length === 1 ? 'account' : 'accounts'}
+              </span>
+            </div>
+            {perAccountGroups.map(group => (
+              <AccountActionGroup
+                key={'acc-' + group.accountId}
+                accountId={group.accountId}
+                accountName={group.accountName}
+                actions={group.actions}
+                onToggleStatus={toggleStatus}
+                onToggleBlocked={setBlocked}
+                onUpdatePriority={updatePriority}
+                expandedNote={expandedNote}
+                onToggleNote={id => setExpandedNote(expandedNote === id ? null : id)}
+              />
+            ))}
+          </motion.div>
+        )
+      ) : (
+        accountGroups.length > 0 && (
+          <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="flex flex-col gap-4">
+            <div className="flex items-center gap-2.5 pl-1">
+              <h2 className="text-base font-bold text-zinc-800 m-0 tracking-tight">Account Actions</h2>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 border border-zinc-200">
+                {accountActions.length}
+              </span>
+            </div>
+            {accountGroups.map(group => (
+              <ActionGroup
+                key={'account-' + group.label}
+                label={group.label}
+                actions={group.actions}
+                onToggleStatus={toggleStatus}
+                onToggleBlocked={setBlocked}
+                onUpdatePriority={updatePriority}
+                expandedNote={expandedNote}
+                onToggleNote={id => setExpandedNote(expandedNote === id ? null : id)}
+              />
+            ))}
+          </motion.div>
+        )
       )}
 
       {/* Empty state */}
-      {generalGroups.length === 0 && accountGroups.length === 0 && (
+      {generalGroups.length === 0 && accountActions.length === 0 && (
         <div className="text-center py-16 text-zinc-400 text-sm">No actions match your filters.</div>
       )}
     </motion.div>
@@ -446,6 +491,154 @@ function ActionGroup({ label, actions, onToggleStatus, onToggleBlocked, onUpdate
         )}
       </AnimatePresence>
     </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Per-Account Action Group (Internal vs Client)                      */
+/* ------------------------------------------------------------------ */
+
+function hasOverdueOpen(actions: Action[]): boolean {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return actions.some(a =>
+    a.status === 'Open' && !!a.due_date && new Date(a.due_date + 'T00:00:00') < today,
+  );
+}
+
+function AccountActionGroup({
+  accountId, accountName, actions,
+  onToggleStatus, onToggleBlocked, onUpdatePriority, expandedNote, onToggleNote,
+}: {
+  accountId: string;
+  accountName: string;
+  actions: Action[];
+  onToggleStatus: (a: Action) => void;
+  onToggleBlocked: (a: Action) => void;
+  onUpdatePriority: (a: Action, p: ActionPriority) => void;
+  expandedNote: string | null;
+  onToggleNote: (id: string) => void;
+}) {
+  const overdue = hasOverdueOpen(actions);
+  const [collapsed, setCollapsed] = useState(!overdue);
+
+  const internal = actions.filter(a => a.owner !== 'Client');
+  const client = actions.filter(a => a.owner === 'Client');
+  const openInternal = internal.filter(a => a.status !== 'Done').length;
+  const openClient = client.filter(a => a.status !== 'Done').length;
+
+  return (
+    <section className="bg-white border border-zinc-200/80 rounded-2xl shadow-sm overflow-hidden">
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        className="w-full flex items-center gap-2.5 px-4 py-3 cursor-pointer bg-transparent hover:bg-zinc-50/60 border-none transition-colors"
+      >
+        {collapsed ? <ChevronRight size={14} className="text-zinc-400" /> : <ChevronDown size={14} className="text-zinc-400" />}
+        <Link
+          to={`/accounts/${accountId}`}
+          onClick={e => e.stopPropagation()}
+          className="text-sm font-bold text-zinc-800 hover:text-brand-primary no-underline tracking-tight"
+        >
+          {accountName}
+        </Link>
+        <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-2 rounded-full text-[10px] font-bold bg-zinc-100 text-zinc-500 border border-zinc-200">
+          {actions.length}
+        </span>
+        {overdue && (
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200 uppercase tracking-wider">
+            Overdue
+          </span>
+        )}
+        <div className="ml-auto flex items-center gap-2 text-[10px] font-semibold text-zinc-400">
+          {openInternal > 0 && <span>Internal: {openInternal}</span>}
+          {openInternal > 0 && openClient > 0 && <span className="text-zinc-300">·</span>}
+          {openClient > 0 && <span>Client: {openClient}</span>}
+        </div>
+      </button>
+
+      <AnimatePresence>
+        {!collapsed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="overflow-hidden"
+          >
+            <div className="border-t border-zinc-100">
+              {internal.length > 0 && (
+                <AudienceSubsection
+                  label="Internal"
+                  accent="green"
+                  actions={internal}
+                  onToggleStatus={onToggleStatus}
+                  onToggleBlocked={onToggleBlocked}
+                  onUpdatePriority={onUpdatePriority}
+                  expandedNote={expandedNote}
+                  onToggleNote={onToggleNote}
+                />
+              )}
+              {client.length > 0 && (
+                <AudienceSubsection
+                  label="Client"
+                  accent="blue"
+                  actions={client}
+                  onToggleStatus={onToggleStatus}
+                  onToggleBlocked={onToggleBlocked}
+                  onUpdatePriority={onUpdatePriority}
+                  expandedNote={expandedNote}
+                  onToggleNote={onToggleNote}
+                />
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </section>
+  );
+}
+
+function AudienceSubsection({
+  label, accent, actions,
+  onToggleStatus, onToggleBlocked, onUpdatePriority, expandedNote, onToggleNote,
+}: {
+  label: string;
+  accent: 'green' | 'blue';
+  actions: Action[];
+  onToggleStatus: (a: Action) => void;
+  onToggleBlocked: (a: Action) => void;
+  onUpdatePriority: (a: Action, p: ActionPriority) => void;
+  expandedNote: string | null;
+  onToggleNote: (id: string) => void;
+}) {
+  const badgeCls = accent === 'green'
+    ? 'bg-green-50 text-green-700 border-green-200'
+    : 'bg-blue-50 text-blue-700 border-blue-200';
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 px-4 py-2 bg-zinc-50/40 border-b border-zinc-100">
+        <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${badgeCls}`}>
+          {label}
+        </span>
+        <span className="text-[10px] font-semibold text-zinc-400">
+          {actions.filter(a => a.status !== 'Done').length} open · {actions.length} total
+        </span>
+      </div>
+      <div>
+        {actions.map((action, i) => (
+          <ActionCard
+            key={action.id}
+            action={action}
+            isLast={i === actions.length - 1}
+            onToggleStatus={() => onToggleStatus(action)}
+            onToggleBlocked={() => onToggleBlocked(action)}
+            onUpdatePriority={(p) => onUpdatePriority(action, p)}
+            noteExpanded={expandedNote === action.id}
+            onToggleNote={() => onToggleNote(action.id)}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 
