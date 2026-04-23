@@ -26,6 +26,8 @@ const MEMBERSHIP_OPTIONS = [
 
 const REPORT_STATUS_OPTIONS = [
   { value: 'In progress', label: 'In progress' },
+  { value: 'Extra Data Requested', label: 'Extra Data Requested' },
+  { value: 'Report Final Checks', label: 'Report Final Checks' },
   { value: 'Overdue', label: 'Overdue' },
   { value: 'Report Delivered', label: 'Report Delivered' },
   { value: 'Data Submitted', label: 'Data Submitted' },
@@ -148,6 +150,8 @@ export default function AccountDetail() {
                     v === 'Report Delivered' ? 'text-green-600' :
                     v === 'Data Submitted' ? 'text-blue-600' :
                     v === 'In progress' ? 'text-amber-600' :
+                    v === 'Extra Data Requested' ? 'text-orange-600' :
+                    v === 'Report Final Checks' ? 'text-blue-700' :
                     'text-zinc-400 italic'
                   }`}>
                     {v ? String(v) : 'No report status'}

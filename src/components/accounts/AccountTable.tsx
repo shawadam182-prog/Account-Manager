@@ -113,7 +113,7 @@ function RAGPopover({ account, onUpdated }: { account: Account; onUpdated: (val:
 /* ------------------------------------------------------------------ */
 
 function ReportPopover({ account, onUpdated }: { account: Account; onUpdated: (val: ReportStatus | null) => void }) {
-  const options: ReportStatus[] = ['In progress', 'Overdue', 'Report Delivered', 'Data Submitted'];
+  const options: ReportStatus[] = ['In progress', 'Extra Data Requested', 'Report Final Checks', 'Overdue', 'Report Delivered', 'Data Submitted'];
 
   return (
     <TablePopover trigger={<StatusBadge status={account.report_status} />}>

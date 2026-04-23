@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { X } from 'lucide-react';
 
 const RAG_OPTIONS = ['Green', 'Amber', 'Red', 'Not set'];
-const REPORT_OPTIONS = ['In progress', 'Overdue', 'Report Delivered', 'Data Submitted', 'Not set'];
+const REPORT_OPTIONS = ['In progress', 'Extra Data Requested', 'Report Final Checks', 'Overdue', 'Report Delivered', 'Data Submitted', 'Not set'];
 const MEMBERSHIP_OPTIONS = ['Business Certification', 'Advanced', 'Net Zero Committed', 'Multiple Tiers', 'Achiever'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const ADDON_OPTIONS = ['Social Value', 'PPN', 'ESOS', 'Data Management'];

@@ -1,6 +1,6 @@
 export type RAGStatus = 'Green' | 'Amber' | 'Red';
 
-export type ReportStatus = 'In progress' | 'Report Delivered' | 'Overdue' | 'Data Submitted';
+export type ReportStatus = 'In progress' | 'Extra Data Requested' | 'Report Final Checks' | 'Report Delivered' | 'Overdue' | 'Data Submitted';
 
 export type MembershipLevel =
   | 'Business Certification'
